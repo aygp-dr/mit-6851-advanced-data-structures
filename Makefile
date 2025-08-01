@@ -1,6 +1,6 @@
 # MIT 6.851 Advanced Data Structures - Makefile
 
-.PHONY: all check-deps setup download-materials download-videos test clean help
+.PHONY: all check-deps setup download-materials download-videos test clean help session-% list-sessions
 
 # Default target
 all: check-deps setup
@@ -18,6 +18,8 @@ help:
 	@echo "  make export-scribe  - Export org-mode scribe notes to LaTeX"
 	@echo "  make test           - Run Guile Scheme test suite"
 	@echo "  make clean          - Clean temporary files"
+	@echo "  make session-N      - Work on session N (e.g., make session-1)"
+	@echo "  make list-sessions  - List all available sessions"
 	@echo ""
 
 # Check for required dependencies
@@ -122,3 +124,29 @@ init-db:
 	@echo "Initializing SQLite database..."
 	@sqlite3 materials/course.db < scripts/schema.sql
 	@echo "✅ Database initialized"
+
+# Session-specific builds
+session-%:
+	@SESSION_NUM=$$(echo $@ | sed 's/session-//'); \
+	SESSION_DIR=$$(printf "sessions/%02d-*" $$SESSION_NUM); \
+	if [ -d "$$SESSION_DIR" ]; then \
+		echo "Building session $$SESSION_NUM in $$SESSION_DIR..."; \
+		$(MAKE) -C $$SESSION_DIR all; \
+	else \
+		echo "❌ Session $$SESSION_NUM not found"; \
+		echo "Creating new session directory..."; \
+		SESSION_NAME=$$(printf "%02d-session" $$SESSION_NUM); \
+		mkdir -p "sessions/$$SESSION_NAME/{src,tests,notes}"; \
+		echo "✅ Created sessions/$$SESSION_NAME"; \
+		echo "Run 'make list-sessions' to see available sessions"; \
+	fi
+
+# List all sessions
+list-sessions:
+	@echo "Available sessions:"
+	@for dir in sessions/*/; do \
+		if [ -d "$$dir" ]; then \
+			SESSION=$$(basename $$dir); \
+			echo "  - $$SESSION"; \
+		fi \
+	done

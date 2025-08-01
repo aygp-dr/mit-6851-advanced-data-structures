@@ -1,0 +1,227 @@
+#+TITLE: Session 1: Persistent Data Structures
+#+AUTHOR: MIT 6.851 Advanced Data Structures
+#+DATE: Spring 2012
+#+PROPERTY: header-args:scheme :tangle ../src/persistent.scm :mkdirp yes
+
+* Overview
+
+This session introduces the concept of persistence in data structures. We explore three types:
+- Partial persistence: Can access any past version, but can only modify the latest
+- Full persistence: Can access and modify any past version
+- Confluent persistence: Can merge different versions
+
+* Persistent Stack Implementation
+
+** Basic Stack Structure
+
+We'll implement a persistent stack using the "node-copying" technique.
+
+#+BEGIN_SRC scheme
+;; Define the stack node structure
+(define-record-type <stack-node>
+  (make-stack-node value next)
+  stack-node?
+  (value stack-node-value)
+  (next stack-node-next))
+
+;; Empty stack sentinel
+(define empty-stack '())
+
+;; Check if stack is empty
+(define (stack-empty? stack)
+  (null? stack))
+#+END_SRC
+
+** Core Operations
+
+*** Push Operation
+
+The push operation creates a new node without modifying the existing stack:
+
+#+BEGIN_SRC scheme
+(define (stack-push stack value)
+  "Push a value onto the stack, returning a new stack"
+  (make-stack-node value stack))
+#+END_SRC
+
+*** Pop Operation
+
+Pop returns both the value and the remaining stack:
+
+#+BEGIN_SRC scheme
+(define (stack-pop stack)
+  "Pop a value from the stack, returning (values value remaining-stack)"
+  (if (stack-empty? stack)
+      (error "Cannot pop from empty stack")
+      (values (stack-node-value stack)
+              (stack-node-next stack))))
+#+END_SRC
+
+*** Peek Operation
+
+#+BEGIN_SRC scheme
+(define (stack-peek stack)
+  "Look at the top value without modifying the stack"
+  (if (stack-empty? stack)
+      (error "Cannot peek at empty stack")
+      (stack-node-value stack)))
+#+END_SRC
+
+** Utility Functions
+
+*** Stack to List Conversion
+
+#+BEGIN_SRC scheme
+(define (stack->list stack)
+  "Convert a stack to a list for display purposes"
+  (let loop ((s stack) (acc '()))
+    (if (stack-empty? s)
+        (reverse acc)
+        (loop (stack-node-next s)
+              (cons (stack-node-value s) acc)))))
+#+END_SRC
+
+*** Stack Size
+
+#+BEGIN_SRC scheme
+(define (stack-size stack)
+  "Count the number of elements in the stack"
+  (let loop ((s stack) (count 0))
+    (if (stack-empty? s)
+        count
+        (loop (stack-node-next s) (+ count 1)))))
+#+END_SRC
+
+* Version Trees and History
+
+** Maintaining Version History
+
+We can extend our stack to maintain a history of all versions:
+
+#+BEGIN_SRC scheme
+(define-record-type <versioned-stack>
+  (make-versioned-stack current-version versions)
+  versioned-stack?
+  (current-version versioned-stack-current)
+  (versions versioned-stack-versions))
+
+;; Create a new versioned stack
+(define (make-new-versioned-stack)
+  (make-versioned-stack 0 (list (cons 0 empty-stack))))
+
+;; Push with version tracking
+(define (versioned-push vstack value)
+  (let* ((current-ver (versioned-stack-current vstack))
+         (versions (versioned-stack-versions vstack))
+         (current-stack (cdr (assoc current-ver versions)))
+         (new-ver (+ current-ver 1))
+         (new-stack (stack-push current-stack value)))
+    (make-versioned-stack 
+     new-ver
+     (cons (cons new-ver new-stack) versions))))
+
+;; Access a specific version
+(define (versioned-at vstack version)
+  (let ((versions (versioned-stack-versions vstack)))
+    (cond ((assoc version versions) => cdr)
+          (else (error "Version not found" version)))))
+#+END_SRC
+
+* Fat Node Method
+
+An alternative implementation using the "fat node" method where nodes store multiple values with timestamps:
+
+#+BEGIN_SRC scheme
+(define-record-type <fat-node>
+  (make-fat-node values-list next-list)
+  fat-node?
+  (values-list fat-node-values)
+  (next-list fat-node-nexts))
+
+(define-record-type <timestamped-value>
+  (make-timestamped-value timestamp value)
+  timestamped-value?
+  (timestamp tv-timestamp)
+  (value tv-value))
+
+(define (fat-node-value-at node time)
+  "Get the value at a specific time"
+  (let loop ((values (fat-node-values node)))
+    (cond ((null? values) (error "No value at time" time))
+          ((<= (tv-timestamp (car values)) time)
+           (tv-value (car values)))
+          (else (loop (cdr values))))))
+#+END_SRC
+
+* Examples and Tests
+
+** Basic Usage Examples
+
+#+BEGIN_SRC scheme :tangle ../src/examples.scm :mkdirp yes
+(use-modules (ice-9 format))
+
+;; Load the persistent data structures
+(load "persistent.scm")
+
+(define (demonstrate-persistent-stack)
+  (format #t "=== Persistent Stack Demo ===~%~%")
+  
+  ;; Create stacks
+  (let* ((s0 empty-stack)
+         (s1 (stack-push s0 'a))
+         (s2 (stack-push s1 'b))
+         (s3 (stack-push s2 'c)))
+    
+    (format #t "s0 (empty): ~a~%" (stack->list s0))
+    (format #t "s1 (push a): ~a~%" (stack->list s1))
+    (format #t "s2 (push b): ~a~%" (stack->list s2))
+    (format #t "s3 (push c): ~a~%" (stack->list s3))
+    
+    ;; Pop from s3
+    (call-with-values
+        (lambda () (stack-pop s3))
+      (lambda (val s3-popped)
+        (format #t "~%After popping from s3:~%")
+        (format #t "  Popped value: ~a~%" val)
+        (format #t "  s3 after pop: ~a~%" (stack->list s3-popped))
+        (format #t "  Original s3: ~a~%" (stack->list s3))
+        (format #t "  s2 unchanged: ~a~%" (stack->list s2))))))
+
+(define (demonstrate-versioned-stack)
+  (format #t "~%~%=== Versioned Stack Demo ===~%~%")
+  
+  (let* ((vs (make-new-versioned-stack))
+         (vs1 (versioned-push vs 'first))
+         (vs2 (versioned-push vs1 'second))
+         (vs3 (versioned-push vs2 'third)))
+    
+    (format #t "Version 0: ~a~%" (stack->list (versioned-at vs3 0)))
+    (format #t "Version 1: ~a~%" (stack->list (versioned-at vs3 1)))
+    (format #t "Version 2: ~a~%" (stack->list (versioned-at vs3 2)))
+    (format #t "Version 3: ~a~%" (stack->list (versioned-at vs3 3)))))
+
+;; Run demonstrations
+(demonstrate-persistent-stack)
+(demonstrate-versioned-stack)
+#+END_SRC
+
+* Performance Analysis
+
+** Time Complexity
+
+| Operation | Persistent Stack | Traditional Stack |
+|-----------+------------------+-------------------|
+| Push      | O(1)             | O(1)              |
+| Pop       | O(1)             | O(1)              |
+| Peek      | O(1)             | O(1)              |
+
+** Space Complexity
+
+- Traditional stack: O(n) for n elements
+- Persistent stack: O(m) where m is total number of operations
+- With path copying: O(log n) per operation for balanced structures
+
+* References
+
+1. Driscoll, J. R., Sarnak, N., Sleator, D. D., & Tarjan, R. E. (1989). Making data structures persistent.
+2. MIT 6.851 Lecture Notes, Spring 2012
