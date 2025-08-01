@@ -1,0 +1,250 @@
+#+TITLE: MIT 6.851 Advanced Data Structures
+#+AUTHOR: Implementation by jwalsh with Claude assistance
+#+DATE: 2025-08-01
+
+[[https://github.com/aygp-dr/mit-6851-advanced-data-structures/actions][https://img.shields.io/github/actions/workflow/status/aygp-dr/mit-6851-advanced-data-structures/test.yml?label=tests]]
+[[https://github.com/aygp-dr/mit-6851-advanced-data-structures/blob/main/LICENSE][https://img.shields.io/badge/license-MIT-blue.svg]]
+[[https://www.gnu.org/software/guile/][https://img.shields.io/badge/guile-2.2%2B-green.svg]]
+[[https://ocw.mit.edu/courses/6-851-advanced-data-structures-spring-2012/][https://img.shields.io/badge/MIT%20OCW-6.851-red.svg]]
+[[https://github.com/aygp-dr/mit-6851-advanced-data-structures/issues][https://img.shields.io/github/issues/aygp-dr/mit-6851-advanced-data-structures]]
+[[https://github.com/aygp-dr/mit-6851-advanced-data-structures][https://img.shields.io/badge/PRs-welcome-brightgreen.svg]]
+
+Implementation of data structures from MIT's 6.851 Advanced Data Structures course (Spring 2012) in Guile Scheme.
+
+* Course Information
+
+- *Course*: [[https://ocw.mit.edu/courses/6-851-advanced-data-structures-spring-2012/][6.851 Advanced Data Structures]]
+- *Instructor*: Prof. Erik Demaine
+- *Term*: Spring 2012
+- *Implementation Language*: Guile Scheme
+- *Approach*: Literate programming with Org-mode
+
+* Setup
+
+** Prerequisites
+
+- Emacs (for org-mode support)
+- Guile 2.2+ (or Guile 3.0)
+- SQLite3
+- Python 3 (for downloading tools)
+- wget (for mirroring)
+- yt-dlp (for video downloads)
+
+** Installation
+
+1. Clone the repository:
+   #+BEGIN_SRC bash
+   git clone https://github.com/aygp-dr/mit-6851-advanced-data-structures.git
+   cd mit-6851-advanced-data-structures
+   #+END_SRC
+
+2. Check dependencies:
+   #+BEGIN_SRC bash
+   make check-deps
+   #+END_SRC
+
+3. Setup environment:
+   #+BEGIN_SRC bash
+   make setup
+   #+END_SRC
+
+4. Download course materials:
+   #+BEGIN_SRC bash
+   make download-materials  # PDFs and website mirror
+   make download-videos     # Video lectures (optional)
+   #+END_SRC
+
+5. Setup scribe templates:
+   #+BEGIN_SRC bash
+   make scribe-template
+   #+END_SRC
+
+* Usage
+
+** Working on Sessions
+
+Each lecture session has its own directory with implementation, tests, and notes:
+
+#+BEGIN_SRC bash
+# Work on Session 1
+make session-1
+
+# List all sessions
+make list-sessions
+
+# Run tests for current session
+cd sessions/01-persistent-data-structures
+make test
+#+END_SRC
+
+** Running Tests
+
+#+BEGIN_SRC bash
+# Run all tests
+make test
+
+# Run session-specific tests
+cd sessions/01-persistent-data-structures
+guile tests/test-persistent-stack.scm
+#+END_SRC
+
+** Creating Scribe Notes
+
+1. Copy the template:
+   #+BEGIN_SRC bash
+   cp templates/lec-template.org scribes/lec01.org
+   #+END_SRC
+
+2. Edit in Emacs with org-mode
+
+3. Export to LaTeX:
+   #+BEGIN_SRC bash
+   make export-scribe ORG_FILE=scribes/lec01.org
+   #+END_SRC
+
+** Literate Programming
+
+Session notes use org-mode with embedded Scheme code:
+
+#+BEGIN_SRC org
+,#+BEGIN_SRC scheme :tangle src/implementation.scm
+(define (persistent-operation data)
+  ;; Implementation here
+  ...)
+,#+END_SRC
+#+END_SRC
+
+Extract code with:
+#+BEGIN_SRC bash
+make tangle  # In session directory
+#+END_SRC
+
+* Project Structure
+
+#+BEGIN_EXAMPLE
+.
+├── lib/                    # Core library implementations
+├── tests/                  # Main test suite
+├── sessions/               # Session-specific implementations
+│   ├── 01-persistent-data-structures/
+│   │   ├── Makefile       # Session build rules
+│   │   ├── notes/         # Org-mode literate notes
+│   │   ├── src/           # Extracted source code
+│   │   └── tests/         # Session tests
+│   └── ...
+├── materials/              # Downloaded materials (gitignored)
+│   ├── pdfs/              # Lecture PDFs
+│   ├── videos/            # Video lectures
+│   └── mirror/            # Website mirrors
+├── scripts/                # Utility scripts
+├── templates/              # Document templates
+└── Makefile               # Main build system
+#+END_EXAMPLE
+
+* Implemented Data Structures
+
+** Temporal Data Structures
+- [X] Persistent Stack (Session 1)
+- [X] Versioned Stack (Session 1)
+- [ ] Persistent Queue
+- [ ] Retroactive Queue
+- [ ] Retroactive Priority Queue
+
+** Geometric Data Structures
+- [ ] Point Location
+- [ ] Orthogonal Range Trees
+- [ ] Fractional Cascading
+- [ ] Kinetic Data Structures
+
+** Dynamic Optimality
+- [ ] Splay Trees
+- [ ] Tango Trees
+- [ ] Multi-Splay Trees
+
+** Memory Hierarchies
+- [ ] B-Trees
+- [ ] Cache-Oblivious B-Trees
+- [ ] Buffer Trees
+- [ ] Cache-Oblivious Priority Queues
+
+** Integer Data Structures
+- [ ] Van Emde Boas Trees
+- [ ] X-fast Tries
+- [ ] Y-fast Tries
+- [ ] Fusion Trees
+
+** String Data Structures
+- [ ] Suffix Arrays
+- [ ] Suffix Trees
+- [ ] Suffix Automata
+
+** Succinct Data Structures
+- [ ] Rank/Select
+- [ ] Succinct Trees
+- [ ] Compressed Text Indexes
+
+** Dynamic Graphs
+- [ ] Link-Cut Trees
+- [ ] Euler Tour Trees
+- [ ] Dynamic Connectivity
+
+* Development
+
+** Testing
+
+Tests use SRFI-64 framework:
+
+#+BEGIN_SRC scheme
+(use-modules (srfi srfi-64))
+
+(test-begin "data-structure-name")
+
+(test-group "operation-group"
+  (test-assert "description" 
+    (condition)))
+
+(test-end "data-structure-name")
+#+END_SRC
+
+** Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Implement with tests
+4. Update documentation
+5. Submit pull request
+
+See [[file:PROJECT_NOTES.md][PROJECT_NOTES.md]] for detailed guidelines.
+
+** Code Style
+
+- Use descriptive names (=stack-push= not =push=)
+- Predicates end with =?= (=empty?=, =stack-node?=)
+- Include docstrings for public functions
+- Add complexity analysis in comments
+
+* Resources
+
+** Course Materials
+- [[https://ocw.mit.edu/courses/6-851-advanced-data-structures-spring-2012/][MIT OpenCourseWare]]
+- [[https://courses.csail.mit.edu/6.851/spring12/][CSAIL Course Page]]
+- [[https://www.youtube.com/playlist?list=PLUl4u3cNGP61hsJNdULdudlRL493b-XZf][YouTube Playlist]]
+
+** References
+- Okasaki, C. (1998). /Purely Functional Data Structures/
+- Driscoll et al. (1989). Making Data Structures Persistent
+- Demaine, E. (2012). 6.851 Lecture Notes
+
+** Related Projects
+- [[https://github.com/jwalsh/purely-functional-data-structures][Purely Functional Data Structures]]
+- [[https://www.cs.cmu.edu/~rwh/students/okasaki.pdf][Okasaki's Thesis]]
+
+* License
+
+Educational implementation based on MIT OpenCourseWare materials. See [[file:LICENSE][LICENSE]] for details.
+
+* Acknowledgments
+
+- Prof. Erik Demaine for the excellent course
+- MIT OpenCourseWare for making materials freely available
+- The Guile Scheme community for the implementation platform
