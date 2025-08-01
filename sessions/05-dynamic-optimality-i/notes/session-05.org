@@ -1,0 +1,658 @@
+#+TITLE: Session 5: Dynamic Optimality I - Binary Search Trees
+#+AUTHOR: MIT 6.851 Advanced Data Structures
+#+DATE: February 29, 2012
+#+PROPERTY: header-args:scheme :tangle ../src/dynamic-optimality.scm :mkdirp yes
+
+* Overview
+
+This session introduces dynamic optimality for binary search trees (BSTs):
+- Theoretical foundations of optimal BST algorithms
+- Access sequence properties and bounds
+- Splay trees and their performance
+- Geometric view of BST operations
+- Greedy algorithm and its optimality
+
+* The Dynamic Optimality Question
+
+Is there one best binary search tree?
+
+BST = comparison data structure supporting search (& predecessor/successor, insert/delete)
+
+Also a model of computation (for DSs):
+- Data must be stored in a BST
+- Unit-cost operations:
+  - Walk left, right, or up (parent)
+  - Rotate this node & its parent
+  - Create/destroy leaf
+
+Search cost = length of root-to-node path
+
+DSs in this model:
+- Vanilla BST (no rotations)
+- AVL trees
+- Red-black trees (B-trees) } O(lg n) per op.
+- BB[α] trees
+- Splay trees } focus here
+- Tango trees
+- Greedy
+
+* Access Sequence Properties
+
+#+BEGIN_SRC scheme
+(use-modules (srfi srfi-9)    ; For define-record-type
+             (srfi srfi-1)    ; For list operations
+             (srfi srfi-11))  ; For let-values
+
+;; BST node structure
+(define-record-type <bst-node>
+  (make-bst-node key left right parent)
+  bst-node?
+  (key node-key set-node-key!)
+  (left node-left set-node-left!)
+  (right node-right set-node-right!)
+  (parent node-parent set-node-parent!))
+
+;; Access sequence tracker
+(define-record-type <access-sequence>
+  (make-access-sequence keys times)
+  access-sequence?
+  (keys seq-keys)      ; List of accessed keys
+  (times seq-times))   ; Access times
+
+;; BST with access tracking
+(define-record-type <tracked-bst>
+  (make-tracked-bst root accesses node-count)
+  tracked-bst?
+  (root bst-root set-bst-root!)
+  (accesses bst-accesses set-bst-accesses!)
+  (node-count bst-node-count set-bst-node-count!))
+#+END_SRC
+
+** Sequential Access Property
+
+In-order traversal in any BST: O(1) amortized/op.
+
+#+BEGIN_SRC scheme
+(define (sequential-access-cost n)
+  "Cost of accessing 1, 2, ..., n in order"
+  n)  ; Total O(n) for n accesses
+
+(define (in-order-traversal node)
+  "Perform in-order traversal of BST"
+  (when node
+    (in-order-traversal (node-left node))
+    (process-node node)
+    (in-order-traversal (node-right node))))
+#+END_SRC
+
+** Dynamic Finger Property
+
+|xi - xi-1| = k ⟹ O(lg k)/op. possible
+
+Think level-linked B-trees ~ but BST (*)
+(*) = best possible without rotation
+
+#+BEGIN_SRC scheme
+(define (dynamic-finger-cost keys)
+  "Compute cost under dynamic finger property"
+  (if (null? (cdr keys))
+      0
+      (+ (log2 (abs (- (car keys) (cadr keys))))
+         (dynamic-finger-cost (cdr keys)))))
+
+(define (finger-search tree finger target)
+  "Search starting from finger position"
+  (let ((distance (abs (- (node-key finger) target))))
+    (search-with-bound tree finger target (ceiling (log2 distance)))))
+#+END_SRC
+
+** Entropy Bound / Static Optimality
+
+k appears pk fraction of the time ⟹ O(∑pk lg 1/pk)/op.
+
+Store xi at height ≤ lg 1/pk + 1
+
+#+BEGIN_SRC scheme
+(define (entropy-bound frequencies)
+  "Compute entropy bound for access sequence"
+  (fold + 0
+        (map (lambda (p)
+               (if (zero? p) 0
+                   (* p (log2 (/ 1 p)))))
+             frequencies)))
+
+(define (build-entropy-optimal-tree keys frequencies)
+  "Build BST with nodes at optimal heights based on frequency"
+  (let ((items (sort (map cons keys frequencies)
+                     (lambda (a b) (> (cdr a) (cdr b))))))
+    (build-from-sorted-frequencies items)))
+#+END_SRC
+
+** Working Set Property
+
+If ti distinct keys accessed since last access to xi, then O(lg ti) possible.
+
+Intuition: store most recent higher up (*)
+⟹ if all xi∈S then O(lg |S|)/op. possible
+[form BST on S, put rest below]
+
+(*) = hard to do with BST, but possible!
+
+#+BEGIN_SRC scheme
+(define-record-type <working-set-tracker>
+  (make-working-set-tracker last-access distinct-since)
+  working-set-tracker?
+  (last-access ws-last-access set-ws-last-access!)
+  (distinct-since ws-distinct set-ws-distinct!))
+
+(define (working-set-cost access-sequence)
+  "Compute cost under working set property"
+  (let ((tracker (make-hash-table)))
+    (fold + 0
+          (map-indexed
+           (lambda (i key)
+             (let ((last (hash-ref tracker key -1)))
+               (if (= last -1)
+                   (log2 i)  ; First access
+                   (let ((distinct (count-distinct-between 
+                                    access-sequence last i)))
+                     (log2 distinct)))))
+           access-sequence))))
+#+END_SRC
+
+** Unified Property
+
+[Iacono-SODA 2001]
+
+If tij distinct keys accessed in xi,...,xj then xj costs O(lg min[|xi-xj| + tij + 2])
+                                                            i    space    time
+
+"fast if close to something recent" (*)
+
+- e.g. 1, n/2, 2, n/2+1, 3, n/2+3, ... ⟹ O(1)/op.
+- implies both working set & dynamic finger
+- possible on pointer machine [Iacono: Bădoiu, Cole, Demaine, Iacono-Algorithmica 2007]
+- possible on BST up to additive O(lg lg n) [Bose, Douïeb, Dujmović, Howat-Algorithmica 2012]
+- OPEN: possible on a BST?
+
+#+BEGIN_SRC scheme
+(define (unified-cost access-sequence positions)
+  "Compute cost under unified property"
+  (map-indexed
+   (lambda (j xj)
+     (let ((min-cost
+            (fold min +inf.0
+                  (map-indexed
+                   (lambda (i xi)
+                     (if (>= i j) +inf.0
+                         (let ((space (abs (- xi xj)))
+                               (time (count-distinct-between
+                                      access-sequence i j)))
+                           (log2 (+ space time 2)))))
+                   access-sequence))))
+       min-cost))
+   access-sequence))
+#+END_SRC
+
+* Dynamic Optimality / O(1)-Competitive
+
+Total cost = O(OPT)
+            min. cost of any BST on this access sequence
+
+- OPEN: possible for any (online) BST?
+         for any pointer-machine DS?
+- OPEN: is any pointer-machine DS = O(OPT of offline pointer-machine DS)?
+
+- balanced BST is O(lg n)-competitive
+- Tango trees are O(lg lg n)-competitive [6]
+
+#+BEGIN_SRC scheme
+(define (is-dynamically-optimal? algorithm access-sequence)
+  "Check if algorithm achieves O(OPT) cost"
+  (let ((alg-cost (run-algorithm algorithm access-sequence))
+        (opt-cost (compute-opt-cost access-sequence)))
+    (<= alg-cost (* constant opt-cost))))
+
+(define (competitive-ratio algorithm sequences)
+  "Compute competitive ratio of algorithm"
+  (apply max
+         (map (lambda (seq)
+                (/ (run-algorithm algorithm seq)
+                   (compute-opt-cost seq)))
+              sequences)))
+#+END_SRC
+
+* Splay Trees
+
+[Sleator & Tarjan - JACM 1985]
+
+- Binary search for x
+- Modify the path:
+  - zig zig: rotate y, rotate x
+  - zig zag: rotate x, rotate x
+- At the end, possible single rotation to put x at root
+- Key feature: at most half the nodes on the path go down in the tree
+
+#+BEGIN_SRC scheme
+;; Splay tree operations
+(define (splay tree x)
+  "Splay node x to root"
+  (while (not (eq? x (bst-root tree)))
+    (let ((p (node-parent x))
+          (g (and p (node-parent p))))
+      (cond
+       ;; Zig case - x is child of root
+       ((not g) (rotate tree x))
+       ;; Zig-zig case - x and parent same direction
+       ((eq? (is-left-child? p) (is-left-child? x))
+        (rotate tree p)
+        (rotate tree x))
+       ;; Zig-zag case - x and parent opposite directions
+       (else
+        (rotate tree x)
+        (rotate tree x)))))
+  x)
+
+(define (is-left-child? node)
+  "Check if node is left child of its parent"
+  (and (node-parent node)
+       (eq? node (node-left (node-parent node)))))
+
+(define (rotate tree node)
+  "Rotate node with its parent"
+  (let ((parent (node-parent node)))
+    (cond
+     ((eq? node (node-left parent))
+      ;; Right rotation
+      (set-node-left! parent (node-right node))
+      (when (node-right node)
+        (set-node-parent! (node-right node) parent))
+      (set-node-right! node parent))
+     (else
+      ;; Left rotation
+      (set-node-right! parent (node-left node))
+      (when (node-left node)
+        (set-node-parent! (node-left node) parent))
+      (set-node-left! node parent)))
+    ;; Update parent pointers
+    (set-node-parent! node (node-parent parent))
+    (set-node-parent! parent node)
+    ;; Update root if necessary
+    (when (not (node-parent node))
+      (set-bst-root! tree node))))
+
+(define (splay-search tree key)
+  "Search for key and splay it to root"
+  (let ((node (bst-search (bst-root tree) key)))
+    (when node
+      (splay tree node))
+    node))
+#+END_SRC
+
+** Performance
+
+(amortized)
+- has working-set property [Sleator & Tarjan]
+- has dynamic-finger property [Cole-SICOMP 2000]
+- CONJECTURE: has unified property [Iacono]
+- CONJECTURE: dynamically optimal [Sleator & Tarjan]
+
+#+BEGIN_SRC scheme
+(define (analyze-splay-performance access-sequence)
+  "Analyze splay tree performance on access sequence"
+  (let ((tree (make-empty-splay-tree))
+        (total-cost 0))
+    (for-each
+     (lambda (key)
+       (let ((cost (splay-search-cost tree key)))
+         (set! total-cost (+ total-cost cost))
+         (splay-search tree key)))
+     access-sequence)
+    total-cost))
+
+;; Potential function for amortized analysis
+(define (splay-potential tree)
+  "Compute potential Φ = ∑ rank(node)"
+  (define (rank node)
+    (if (not node) 0
+        (+ 1 (rank (node-left node))
+             (rank (node-right node)))))
+  (sum-tree-nodes tree rank))
+#+END_SRC
+
+* Geometric View
+
+[Demaine, Harmon, Iacono, Kane, Pătrașcu - SODA 2009]
+
+Access sequence → point set {(xi, i)}
+
+BST execution → point set:
+which nodes touched during search(xi)?
+
+#+BEGIN_SRC scheme
+;; Geometric representation
+(define-record-type <space-time-point>
+  (make-st-point space time)
+  space-time-point?
+  (space point-space)  ; Key value
+  (time point-time))   ; Access time
+
+(define (access-sequence->point-set sequence)
+  "Convert access sequence to space-time points"
+  (map-indexed (lambda (i key)
+                 (make-st-point key i))
+               sequence))
+
+(define (bst-execution->touched-points tree sequence)
+  "Record which nodes touched during execution"
+  (let ((touched '()))
+    (for-each-indexed
+     (lambda (i key)
+       (let ((path (search-path tree key)))
+         (set! touched 
+               (append touched
+                       (map (lambda (node)
+                              (make-st-point (node-key node) i))
+                            path)))))
+     sequence)
+    touched))
+#+END_SRC
+
+** Theorem: Point set is a valid BST execution ⟺ Arborally Satisfied Set (ASS)
+
+A rectangle spanned by two points in set, not on horizontal/vertical line, contains another point
+- in fact must have another point on a rectangle side incident to either corner
+
+#+BEGIN_SRC scheme
+(define (is-arborally-satisfied? points)
+  "Check if point set is arborally satisfied"
+  (for-all-pairs
+   points
+   (lambda (p1 p2)
+     (if (and (not (= (point-space p1) (point-space p2)))
+              (not (= (point-time p1) (point-time p2))))
+         (exists?
+          points
+          (lambda (p3)
+            (and (not (eq? p3 p1))
+                 (not (eq? p3 p2))
+                 (point-in-rectangle? p3 p1 p2)
+                 (on-rectangle-side? p3 p1 p2))))
+         #t))))
+
+(define (point-in-rectangle? p p1 p2)
+  "Check if point p is inside rectangle spanned by p1 and p2"
+  (let ((x-min (min (point-space p1) (point-space p2)))
+        (x-max (max (point-space p1) (point-space p2)))
+        (t-min (min (point-time p1) (point-time p2)))
+        (t-max (max (point-time p1) (point-time p2))))
+    (and (>= (point-space p) x-min)
+         (<= (point-space p) x-max)
+         (>= (point-time p) t-min)
+         (<= (point-time p) t-max))))
+#+END_SRC
+
+** Corollary: OPT = smallest ASS containing input
+
+OPEN: complexity? O(1)-approximation?
+
+#+BEGIN_SRC scheme
+(define (compute-opt-cost access-sequence)
+  "Compute optimal BST cost for access sequence"
+  (let ((input-points (access-sequence->point-set access-sequence)))
+    (find-smallest-ass input-points)))
+
+(define (find-smallest-ass input-points)
+  "Find smallest arborally satisfied set containing input"
+  ;; This is computationally hard!
+  ;; Known approaches use ILP or approximation algorithms
+  (error "Computing exact OPT is NP-hard"))
+#+END_SRC
+
+* Greedy Algorithm
+
+[Lucas 1988; Munro 2000]
+
+- Consider point set one row at a time
+- Add the necessary points on that row
+- In tree view: re-arrange root-to-x path optimally for future searches
+
+CONJECTURE: Greedy = O(OPT)
+           or even = OPT + O(m)
+
+- seems obvious... just need to show you needn't stray from the access path
+
+#+BEGIN_SRC scheme
+(define (greedy-algorithm access-sequence)
+  "Greedy BST algorithm"
+  (let ((tree (make-empty-bst))
+        (touched-points '()))
+    (for-each-indexed
+     (lambda (time key)
+       ;; Find path to key
+       (let ((path (search-path tree key)))
+         ;; Add necessary points for this row
+         (let ((row-points (compute-greedy-row path time)))
+           (set! touched-points (append touched-points row-points))
+           ;; Rearrange path optimally
+           (rearrange-path tree path))))
+     access-sequence)
+    touched-points))
+
+(define (compute-greedy-row path time)
+  "Compute points needed for current row"
+  (map (lambda (node)
+         (make-st-point (node-key node) time))
+       path))
+
+(define (rearrange-path tree path)
+  "Rearrange path optimally for future accesses"
+  ;; This is the key insight of greedy:
+  ;; Put accessed node at root, maintain BST property
+  (when (not (null? path))
+    (splay tree (car (last-pair path)))))
+#+END_SRC
+
+** So what?
+
+Theorem: online ASS algorithm → online BST (with O(1) slowdown)
+
+Corollary: Greedy is actually an online BST!
+          - Conjecture ⟹ dynamically optimal
+
+#+BEGIN_SRC scheme
+(define (ass-to-bst ass-algorithm)
+  "Convert online ASS algorithm to online BST"
+  (lambda (tree key)
+    (let* ((current-points (get-current-points tree))
+           (new-point (make-st-point key (current-time)))
+           (ass-points (ass-algorithm (cons new-point current-points))))
+      ;; Convert ASS solution back to BST operations
+      (execute-bst-operations tree ass-points))))
+
+(define (online-greedy-bst tree key)
+  "Online greedy BST implementation"
+  (let ((node (bst-search (bst-root tree) key)))
+    (when node
+      ;; Greedy: bring accessed node to root
+      (splay tree node))
+    node))
+#+END_SRC
+
+* Proof Sketch of Theorem
+
+- Store touched nodes from access in a split tree: split(x) moves x to root & deletes x, leaving 2 split trees in O(1) amortized time ~if fully split:
+- Really: all n splits in O(n) time (& make split tree on n items in O(n))
+- 2-3-4 tree with min & max pointers can split into "n" & "n" in O(lg min{n,n"}) + O(n) total merges
+- Use potential Φ = ∑(|T| · lg |T|) over split tree T
+
+⟹ O(1) amortized search cost for split
+- Simulate with BST: interleaved min/max search
+
+⟹ BST is "treap of split trees", where heap order is by previous touch & ties mean in split tree (⟹optimal order)
+- use proof similar to (⟺) above
+- by ASS, when touching node in split tree, also touch predecessor & successor in parent split tree ⟹ cheap to reach
+
+#+BEGIN_SRC scheme
+;; Split tree implementation
+(define-record-type <split-tree>
+  (make-split-tree items min-ptr max-ptr)
+  split-tree?
+  (items split-items set-split-items!)
+  (min-ptr split-min set-split-min!)
+  (max-ptr split-max set-split-max!))
+
+(define (split! tree x)
+  "Split tree at x, returning two trees"
+  (let ((pos (find-position tree x)))
+    (if pos
+        (let ((left-items (take (split-items tree) pos))
+              (right-items (drop (split-items tree) (+ pos 1))))
+          (values (make-split-tree left-items 
+                                   (split-min tree)
+                                   (if (null? left-items) #f
+                                       (last left-items)))
+                  (make-split-tree right-items
+                                   (if (null? right-items) #f
+                                       (car right-items))
+                                   (split-max tree))))
+        (values tree #f))))
+
+;; Treap of split trees
+(define-record-type <split-treap-node>
+  (make-st-node split-tree priority left right)
+  split-treap-node?
+  (split-tree st-split-tree)
+  (priority st-priority)     ; Previous touch time
+  (left st-left set-st-left!)
+  (right st-right set-st-right!))
+
+(define (maintain-treap-property! treap node)
+  "Maintain heap property by priority (touch time)"
+  (while (and (st-parent node)
+              (< (st-priority node)
+                 (st-priority (st-parent node))))
+    (rotate treap node)))
+#+END_SRC
+
+* Helper Functions
+
+#+BEGIN_SRC scheme
+;; Utility functions
+(define (log2 n)
+  "Compute log base 2"
+  (/ (log n) (log 2)))
+
+(define (map-indexed proc lst)
+  "Map with index"
+  (let loop ((lst lst) (i 0) (result '()))
+    (if (null? lst)
+        (reverse result)
+        (loop (cdr lst) (+ i 1)
+                (cons (proc i (car lst)) result)))))
+
+(define (for-each-indexed proc lst)
+  "For-each with index"
+  (let loop ((lst lst) (i 0))
+    (unless (null? lst)
+      (proc i (car lst))
+      (loop (cdr lst) (+ i 1)))))
+
+(define (count-distinct-between sequence start end)
+  "Count distinct elements between indices"
+  (let ((seen (make-hash-table)))
+    (let loop ((i start) (count 0))
+      (if (>= i end)
+          count
+          (let ((key (list-ref sequence i)))
+            (if (hash-ref seen key)
+                (loop (+ i 1) count)
+                (begin
+                  (hash-set! seen key #t)
+                  (loop (+ i 1) (+ count 1)))))))))
+
+(define (for-all-pairs lst proc)
+  "Check property for all pairs"
+  (let loop ((l1 lst))
+    (if (null? l1)
+        #t
+        (and (let loop2 ((l2 (cdr l1)))
+               (if (null? l2)
+                   #t
+                   (and (proc (car l1) (car l2))
+                        (loop2 (cdr l2)))))
+             (loop (cdr l1))))))
+
+(define (exists? lst pred)
+  "Check if any element satisfies predicate"
+  (and (not (null? lst))
+       (or (pred (car lst))
+           (exists? (cdr lst) pred))))
+
+(define (bst-search node key)
+  "Standard BST search"
+  (cond
+   ((not node) #f)
+   ((= key (node-key node)) node)
+   ((< key (node-key node)) (bst-search (node-left node) key))
+   (else (bst-search (node-right node) key))))
+
+(define (search-path tree key)
+  "Return path from root to key"
+  (let loop ((node (bst-root tree)) (path '()))
+    (if (not node)
+        (reverse path)
+        (let ((new-path (cons node path)))
+          (cond
+           ((= key (node-key node)) (reverse new-path))
+           ((< key (node-key node)) (loop (node-left node) new-path))
+           (else (loop (node-right node) new-path)))))))
+
+(define (make-empty-bst)
+  "Create empty BST"
+  (make-tracked-bst #f '() 0))
+
+(define (make-empty-splay-tree)
+  "Create empty splay tree"
+  (make-tracked-bst #f '() 0))
+
+(define +inf.0 +inf.0)
+
+;; Stub implementations
+(define (process-node node) #t)
+(define (search-with-bound tree finger target bound) #f)
+(define (build-from-sorted-frequencies items) #f)
+(define (sum-tree-nodes tree fn) 0)
+(define (splay-search-cost tree key) 1)
+(define (on-rectangle-side? p p1 p2) #t)
+(define (get-current-points tree) '())
+(define (current-time) 0)
+(define (execute-bst-operations tree points) #t)
+(define (while cond . body) (when cond (begin . body)))
+(define (when cond . body) (if cond (begin . body)))
+(define (unless cond . body) (if (not cond) (begin . body)))
+#+END_SRC
+
+* Summary
+
+** Key Results
+
+1. Dynamic optimality remains open for BSTs
+2. Splay trees have many good properties but optimality unproven
+3. Geometric view provides new perspective
+4. Greedy algorithm conjectured to be optimal
+
+** Open Problems
+
+1. Is any online BST O(1)-competitive?
+2. Does splay tree achieve unified property?
+3. Is greedy algorithm dynamically optimal?
+4. Complexity of computing OPT?
+
+* References
+
+1. Sleator, D. D., & Tarjan, R. E. (1985). Self-adjusting binary search trees.
+2. Cole, R. (2000). On the dynamic finger conjecture for splay trees.
+3. Demaine, E. D., Harmon, D., Iacono, J., Kane, D., & Pătrașcu, M. (2009). The geometry of binary search trees.
+4. Lucas, J. M. (1988). Canonical forms for competitive binary search tree algorithms.
+5. Iacono, J. (2001). Alternatives to splay trees with O(log n) worst-case access times.
