@@ -262,8 +262,10 @@
       (let ((left-size (wb-size (wb-node-left node)))
             (right-size (wb-size (wb-node-right node)))
             (total-size (wb-node-size node)))
-        (and (>= left-size (* alpha total-size))
-             (>= right-size (* alpha total-size))))))
+        ;; For weight balance: size of each child >= alpha * (total - 1)
+        ;; This allows single nodes to be balanced
+        (and (>= left-size (* alpha (- total-size 1)))
+             (>= right-size (* alpha (- total-size 1)))))))
 
 (define (wb-insert tree point alpha)
   "Insert point maintaining weight balance"

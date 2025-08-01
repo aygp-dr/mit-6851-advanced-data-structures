@@ -1,6 +1,6 @@
 # MIT 6.851 Advanced Data Structures - Makefile
 
-.PHONY: all check-deps setup download-materials download-videos test clean help session-% list-sessions
+.PHONY: all check-deps setup download-materials download-videos test clean help session-% list-sessions run run-all
 
 # Default target
 all: check-deps setup
@@ -110,6 +110,23 @@ export-scribe:
 test:
 	@echo "Running Guile Scheme tests..."
 	@guile -L lib tests/run-tests.scm
+
+# Run all sessions
+run-all:
+	@echo "Running all sessions..."
+	@for dir in sessions/*/; do \
+		if [ -d "$$dir" ] && [ -f "$$dir/Makefile" ]; then \
+			SESSION=$$(basename $$dir); \
+			echo ""; \
+			echo "Running $$SESSION..."; \
+			$(MAKE) -C $$dir run || echo "⚠️  Failed to run $$SESSION"; \
+		fi \
+	done
+	@echo ""
+	@echo "✅ Finished running all sessions"
+
+# Alias for run-all
+run: run-all
 
 # Clean temporary files
 clean:

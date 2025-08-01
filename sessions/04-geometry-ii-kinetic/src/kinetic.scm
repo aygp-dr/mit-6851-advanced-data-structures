@@ -383,7 +383,7 @@
         '()
         lst))
 
-(define +inf.0 +inf.0)  ; Positive infinity
+(define +inf.0 (inf))   ; Positive infinity
 (define infinity 1e308)  ; Large number
 
 ;; Horizontal segment for 3D range searching

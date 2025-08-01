@@ -13,9 +13,12 @@ SCHEME_SRC := $(wildcard src/*.scm)
 TEST_SRC := $(wildcard tests/*.scm)
 
 # Targets
-.PHONY: all test tangle clean run-examples
+.PHONY: all test tangle clean run-examples run
 
 all: test
+
+# Run target - runs tests and examples
+run: test run-examples
 
 # Extract Scheme code from org-mode notes
 tangle: $(ORG_NOTES)
