@@ -2,12 +2,9 @@
 #+AUTHOR: Implementation by jwalsh with Claude assistance
 #+DATE: 2025-08-01
 
-[[https://github.com/aygp-dr/mit-6851-advanced-data-structures/actions][https://img.shields.io/github/actions/workflow/status/aygp-dr/mit-6851-advanced-data-structures/test.yml?label=tests]]
 [[https://github.com/aygp-dr/mit-6851-advanced-data-structures/blob/main/LICENSE][https://img.shields.io/badge/license-MIT-blue.svg]]
 [[https://www.gnu.org/software/guile/][https://img.shields.io/badge/guile-2.2%2B-green.svg]]
 [[https://ocw.mit.edu/courses/6-851-advanced-data-structures-spring-2012/][https://img.shields.io/badge/MIT%20OCW-6.851-red.svg]]
-[[https://github.com/aygp-dr/mit-6851-advanced-data-structures/issues][https://img.shields.io/github/issues/aygp-dr/mit-6851-advanced-data-structures]]
-[[https://github.com/aygp-dr/mit-6851-advanced-data-structures][https://img.shields.io/badge/PRs-welcome-brightgreen.svg]]
 
 Implementation of data structures from MIT's 6.851 Advanced Data Structures course (Spring 2012) in Guile Scheme.
 
