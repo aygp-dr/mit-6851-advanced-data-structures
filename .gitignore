@@ -1,0 +1,37 @@
+# Environment
+.env
+.venv/
+__pycache__/
+*.pyc
+
+# Course materials (downloaded)
+materials/
+mirror/
+videos/
+*.mp4
+*.webm
+*.mkv
+
+# Temporary files
+*~
+*.go
+*.log
+*.tmp
+
+# SQLite databases
+*.db
+*.db-journal
+
+# LaTeX temporary files
+*.aux
+*.out
+*.toc
+*.pdf
+
+# Emacs
+.#*
+\#*#
+
+# OS files
+.DS_Store
+Thumbs.db

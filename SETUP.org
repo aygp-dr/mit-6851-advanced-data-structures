@@ -1,0 +1,494 @@
+#+TITLE: MIT 6.851 Advanced Data Structures - Setup
+#+AUTHOR: Course Implementation
+#+PROPERTY: header-args :tangle yes :mkdirp yes
+
+* Overview
+
+This file contains the initial setup and configuration for the MIT 6.851 Advanced Data Structures course implementation. We'll tangle this file once to generate all the necessary scripts and configurations.
+
+* Environment Configuration
+
+** Git Ignore File
+
+#+begin_src text :tangle .gitignore
+# Environment
+.env
+.venv/
+__pycache__/
+*.pyc
+
+# Course materials (downloaded)
+materials/
+mirror/
+videos/
+*.mp4
+*.webm
+*.mkv
+
+# Temporary files
+*~
+*.go
+*.log
+*.tmp
+
+# SQLite databases
+*.db
+*.db-journal
+
+# LaTeX temporary files
+*.aux
+*.out
+*.toc
+*.pdf
+
+# Emacs
+.#*
+\#*#
+
+# OS files
+.DS_Store
+Thumbs.db
+#+end_src
+
+* Download Scripts
+
+** Download Materials Script
+
+#+begin_src bash :tangle scripts/download-materials.sh :shebang #!/bin/bash
+# Download course materials from CSAIL
+
+set -e
+
+# Load environment
+if [ -f .env ]; then
+    source .env
+else
+    echo "Error: .env file not found. Run 'make setup' first."
+    exit 1
+fi
+
+# Create directories
+mkdir -p "${PDF_DIR}"
+mkdir -p "${MIRROR_DIR}"
+
+echo "Starting material download..."
+
+# Download scribe notes and instructor notes
+BASE_URL="${COURSE_URL}"
+
+# List of lectures (1-22)
+for i in {1..22}; do
+    LECTURE=$(printf "L%02d" $i)
+    echo "Downloading materials for ${LECTURE}..."
+    
+    # Scribe notes
+    wget -q -nc -P "${PDF_DIR}" "${BASE_URL}${LECTURE}-scribe.pdf" || echo "  No scribe notes for ${LECTURE}"
+    
+    # Instructor notes
+    wget -q -nc -P "${PDF_DIR}" "${BASE_URL}${LECTURE}.pdf" || echo "  No instructor notes for ${LECTURE}"
+done
+
+# Download all scribe notes compilation
+echo "Downloading complete scribe notes..."
+wget -q -nc -P "${PDF_DIR}" "${BASE_URL}scribe-notes.pdf" || echo "Failed to download complete notes"
+
+# Mirror the CSAIL site
+echo "Mirroring CSAIL lecture site..."
+wget --mirror --convert-links --adjust-extension \
+     --page-requisites --no-parent \
+     --directory-prefix="${MIRROR_DIR}" \
+     --wait="${MIRROR_WAIT}" \
+     --limit-rate=200k \
+     "${COURSE_URL}" || echo "Mirror completed with some errors"
+
+echo "✅ Material download complete!"
+#+end_src
+
+** Download Videos Script
+
+#+begin_src bash :tangle scripts/download-videos.sh :shebang #!/bin/bash
+# Download video lectures using yt-dlp
+
+set -e
+
+# Load environment
+if [ -f .env ]; then
+    source .env
+else
+    echo "Error: .env file not found. Run 'make setup' first."
+    exit 1
+fi
+
+# Activate virtual environment
+if [ -f .venv/bin/activate ]; then
+    source .venv/bin/activate
+else
+    echo "Error: Virtual environment not found. Run 'make setup' first."
+    exit 1
+fi
+
+# Create video directory
+mkdir -p "${VIDEO_DIR}"
+
+echo "Starting video download..."
+
+# Video URLs mapping (from OCW)
+declare -A VIDEO_URLS=(
+    ["L01"]="https://www.youtube.com/watch?v=T0yzrZL1py0"
+    ["L02"]="https://www.youtube.com/watch?v=WqCWghETNDc"
+    ["L03"]="https://www.youtube.com/watch?v=-KBPG-oZfco"
+    ["L04"]="https://www.youtube.com/watch?v=P8eQTwE5rWg"
+    ["L05"]="https://www.youtube.com/watch?v=E5RP8uu7E8g"
+    ["L06"]="https://www.youtube.com/watch?v=hT42KThQFfg"
+    ["L07"]="https://www.youtube.com/watch?v=i1Zg-JNpDZo"
+    ["L08"]="https://www.youtube.com/watch?v=LXpmSAXQAiE"
+    ["L09"]="https://www.youtube.com/watch?v=CpGaVFqjBcI"
+    ["L10"]="https://www.youtube.com/watch?v=BXcqQ01nKEE"
+    ["L11"]="https://www.youtube.com/watch?v=vwtpPcLWmHQ"
+    ["L12"]="https://www.youtube.com/watch?v=Z5DQ_FReaXo"
+    ["L13"]="https://www.youtube.com/watch?v=fKCdKOxJMvc"
+    ["L14"]="https://www.youtube.com/watch?v=G6nJNNhP3rA"
+    ["L15"]="https://www.youtube.com/watch?v=JN6rBq1D_xk"
+    ["L16"]="https://www.youtube.com/watch?v=F3XGNJa19Eg"
+    ["L17"]="https://www.youtube.com/watch?v=WLdARvbXbNI"
+    ["L18"]="https://www.youtube.com/watch?v=RP9j3bFhQT8"
+    ["L19"]="https://www.youtube.com/watch?v=FYVqt98pxgE"
+    ["L20"]="https://www.youtube.com/watch?v=iWcDa9UYSF4"
+    ["L21"]="https://www.youtube.com/watch?v=0LAtu9vcInM"
+    ["L22"]="https://www.youtube.com/watch?v=UxICsjrdlJA"
+)
+
+# Download each video
+for lecture in "${!VIDEO_URLS[@]}"; do
+    echo "Downloading ${lecture}..."
+    yt-dlp -f "best[height<=${VIDEO_QUALITY%p}]" \
+           --output "${VIDEO_DIR}/${lecture}-%(title)s.%(ext)s" \
+           "${VIDEO_URLS[$lecture]}" || echo "Failed to download ${lecture}"
+done
+
+echo "✅ Video download complete!"
+#+end_src
+
+** Environment Setup Script
+
+#+begin_src bash :tangle scripts/setup-env.sh :shebang #!/bin/bash
+# Setup development environment
+
+set -e
+
+echo "Setting up development environment..."
+
+# Check Guile version
+GUILE_VERSION=$(guile --version | head -1 | grep -oE '[0-9]+\.[0-9]+')
+echo "Found Guile version: ${GUILE_VERSION}"
+
+if [[ "${GUILE_VERSION}" < "2.2" ]]; then
+    echo "Warning: Guile version ${GUILE_VERSION} is older than recommended (2.2+)"
+fi
+
+# Initialize directories
+mkdir -p lib/{persistent,retroactive,geometric,cache-oblivious,dictionaries,integer,trees,strings,succinct,dynamic-graphs}
+mkdir -p tests
+mkdir -p scribes
+mkdir -p templates
+
+echo "✅ Environment setup complete!"
+#+end_src
+
+* Database Schema
+
+#+begin_src sql :tangle scripts/schema.sql
+-- MIT 6.851 Course Database Schema
+
+-- Lectures table
+CREATE TABLE IF NOT EXISTS lectures (
+    id INTEGER PRIMARY KEY,
+    number INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    date TEXT,
+    description TEXT,
+    video_url TEXT,
+    scribe_pdf TEXT,
+    instructor_pdf TEXT
+);
+
+-- Topics table
+CREATE TABLE IF NOT EXISTS topics (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT
+);
+
+-- Lecture-Topic mapping
+CREATE TABLE IF NOT EXISTS lecture_topics (
+    lecture_id INTEGER,
+    topic_id INTEGER,
+    FOREIGN KEY (lecture_id) REFERENCES lectures(id),
+    FOREIGN KEY (topic_id) REFERENCES topics(id),
+    PRIMARY KEY (lecture_id, topic_id)
+);
+
+-- Insert lecture data
+INSERT OR IGNORE INTO lectures (number, title) VALUES
+    (1, 'Persistent Data Structures'),
+    (2, 'Retroactive Data Structures'),
+    (3, 'Geometric Structures I'),
+    (4, 'Geometric Structures II'),
+    (5, 'Dynamic Optimality I'),
+    (6, 'Dynamic Optimality II'),
+    (7, 'Memory Hierarchy Models'),
+    (8, 'Cache-Oblivious Structures I'),
+    (9, 'Cache-Oblivious Structures II'),
+    (10, 'Dictionaries'),
+    (11, 'Integer Models'),
+    (12, 'Fusion Trees'),
+    (13, 'Integer Lower Bounds'),
+    (14, 'Sorting in Linear Time'),
+    (15, 'Static Trees'),
+    (16, 'Strings'),
+    (17, 'Succinct Structures I'),
+    (18, 'Succinct Structures II'),
+    (19, 'Dynamic Graphs I'),
+    (20, 'Dynamic Graphs II'),
+    (21, 'Dynamic Connectivity Lower Bound'),
+    (22, 'History of Memory Models');
+#+end_src
+
+* Test Framework
+
+#+begin_src scheme :tangle tests/run-tests.scm
+;;; MIT 6.851 Test Runner
+
+(use-modules (srfi srfi-64)
+             (ice-9 ftw))
+
+;; Add lib directory to load path
+(add-to-load-path (string-append (getcwd) "/lib"))
+
+(define (find-test-files dir)
+  "Find all test files in directory"
+  (let ((files '()))
+    (ftw dir
+         (lambda (filename statinfo flag)
+           (when (and (eq? flag 'regular)
+                      (string-suffix? "-test.scm" filename))
+             (set! files (cons filename files)))
+           #t))
+    files))
+
+(define (run-all-tests)
+  "Run all test files"
+  (test-runner-factory
+   (lambda () (test-runner-simple)))
+  
+  (let ((test-files (find-test-files "tests")))
+    (format #t "Found ~a test files~%" (length test-files))
+    (for-each 
+     (lambda (file)
+       (format #t "Running tests in ~a...~%" file)
+       (load file))
+     test-files)))
+
+;; Run tests
+(run-all-tests)
+#+end_src
+
+* Initial Persistent Data Structure Implementation
+
+#+begin_src scheme :tangle lib/persistent/stack.scm
+;;; Persistent Stack Implementation
+;;; Based on Lecture 1: Persistent Data Structures
+
+(define-module (persistent stack)
+  #:export (make-stack
+            stack-push
+            stack-pop
+            stack-top
+            stack-empty?))
+
+;; Node structure
+(define (make-node value next)
+  (cons value next))
+
+(define (node-value node)
+  (car node))
+
+(define (node-next node)
+  (cdr node))
+
+;; Stack operations
+(define (make-stack)
+  "Create an empty persistent stack"
+  '())
+
+(define (stack-push stack value)
+  "Push a value onto the stack, returning a new stack"
+  (make-node value stack))
+
+(define (stack-pop stack)
+  "Pop a value from the stack, returning the new stack"
+  (if (stack-empty? stack)
+      (error "Cannot pop from empty stack")
+      (node-next stack)))
+
+(define (stack-top stack)
+  "Get the top value of the stack"
+  (if (stack-empty? stack)
+      (error "Cannot get top of empty stack")
+      (node-value stack)))
+
+(define (stack-empty? stack)
+  "Check if the stack is empty"
+  (null? stack))
+#+end_src
+
+* Test for Persistent Stack
+
+#+begin_src scheme :tangle tests/persistent-stack-test.scm
+;;; Tests for Persistent Stack
+
+(use-modules (srfi srfi-64)
+             (persistent stack))
+
+(test-begin "persistent-stack")
+
+(test-group "Basic operations"
+  (let* ((s0 (make-stack))
+         (s1 (stack-push s0 1))
+         (s2 (stack-push s1 2))
+         (s3 (stack-push s2 3)))
+    
+    (test-assert "Empty stack" (stack-empty? s0))
+    (test-assert "Non-empty stack" (not (stack-empty? s1)))
+    
+    (test-equal "Top of stack" 3 (stack-top s3))
+    (test-equal "Previous version unchanged" 2 (stack-top s2))
+    
+    (let ((s3-popped (stack-pop s3)))
+      (test-equal "Pop returns previous version" 2 (stack-top s3-popped))
+      (test-equal "Original unchanged after pop" 3 (stack-top s3)))))
+
+(test-group "Error conditions"
+  (let ((empty (make-stack)))
+    (test-error "Pop from empty" (stack-pop empty))
+    (test-error "Top of empty" (stack-top empty))))
+
+(test-end "persistent-stack")
+#+end_src
+
+* README
+
+#+begin_src markdown :tangle README.md
+# MIT 6.851 Advanced Data Structures
+
+Implementation of data structures from MIT's 6.851 Advanced Data Structures course (Spring 2012) in Guile Scheme.
+
+## Course Information
+
+- **Course**: 6.851 Advanced Data Structures
+- **Instructor**: Prof. Erik Demaine
+- **Term**: Spring 2012
+- **Implementation Language**: Guile Scheme
+
+## Setup
+
+### Prerequisites
+
+- Emacs
+- Guile 2.2+ (or Guile 3.0)
+- SQLite3
+- Python 3 (for downloading tools)
+- wget (for mirroring)
+- yt-dlp (for video downloads)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd mit-6851-advanced-data-structures
+   ```
+
+2. Check dependencies:
+   ```bash
+   make check-deps
+   ```
+
+3. Setup environment:
+   ```bash
+   make setup
+   ```
+
+4. Download course materials:
+   ```bash
+   make download-materials  # PDFs and website mirror
+   make download-videos     # Video lectures (optional)
+   ```
+
+5. Setup scribe templates:
+   ```bash
+   make scribe-template
+   ```
+
+## Usage
+
+### Running Tests
+
+```bash
+make test
+```
+
+### Creating Scribe Notes
+
+1. Copy the template:
+   ```bash
+   cp templates/lec-template.org scribes/lec01.org
+   ```
+
+2. Edit in Emacs with org-mode
+
+3. Export to LaTeX:
+   ```bash
+   make export-scribe ORG_FILE=scribes/lec01.org
+   ```
+
+## Project Structure
+
+- `lib/` - Data structure implementations
+- `tests/` - Test suite
+- `scribes/` - Lecture notes in org-mode
+- `scripts/` - Utility scripts
+- `materials/` - Downloaded course materials (gitignored)
+
+## Implemented Data Structures
+
+- [x] Persistent Stack
+- [ ] Persistent Queue
+- [ ] Retroactive Queue
+- [ ] Point Location
+- [ ] Orthogonal Range Trees
+- [ ] Link-Cut Trees
+- [ ] Splay Trees
+- [ ] B-Trees
+- [ ] Cache-Oblivious B-Trees
+- [ ] Fusion Trees
+- [ ] Van Emde Boas Trees
+- [ ] Suffix Arrays
+- [ ] Succinct Rank/Select
+
+## License
+
+Educational implementation based on MIT OpenCourseWare materials.
+#+end_src
+
+* Tangle Instructions
+
+To tangle this file and generate all the code:
+
+1. Open this file in Emacs
+2. Run `C-c C-v t` (org-babel-tangle)
+
+Or from the command line:
+#+begin_src bash
+emacs --batch --eval "(progn (require 'org) (org-babel-tangle-file \"SETUP.org\"))"
+#+end_src
