@@ -149,6 +149,9 @@ scratch/
 wget-log*
 cookies.txt
 
+# Tools directory (downloaded binaries)
+tools/
+
 # Keep important files
 !.gitignore
 !.env.example

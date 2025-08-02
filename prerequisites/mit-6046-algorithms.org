@@ -1,0 +1,298 @@
+#+TITLE: Prerequisites for MIT 6.851 - MIT 6.046 Design and Analysis of Algorithms
+#+AUTHOR: Course Prerequisites Documentation
+#+DATE: 2025-08-01
+#+STARTUP: overview
+#+OPTIONS: tangle:nil
+
+* Overview of MIT 6.046 - Design and Analysis of Algorithms
+:PROPERTIES:
+:CUSTOM_ID: overview
+:END:
+
+This document provides an overview of the prerequisite knowledge from MIT 6.046 needed for MIT 6.851 Advanced Data Structures. The goal is to create a "time travel" reference - understanding where we came from before diving into persistent data structures.
+
+** Course Information
+
+- **Course**: MIT 6.046J Design and Analysis of Algorithms (Spring 2015)
+- **Instructors**: Erik Demaine, Srini Devadas, Nancy Lynch
+- **OCW Link**: https://ocw.mit.edu/courses/6-046j-design-and-analysis-of-algorithms-spring-2015/
+
+** Why This Prerequisite Matters
+
+Before studying advanced topics like persistent data structures, you need:
+- Strong foundation in algorithm analysis (asymptotic notation, recurrences)
+- Understanding of fundamental data structures
+- Experience with algorithmic paradigms
+- Mathematical maturity for proofs and analysis
+
+* Core Topics from 6.046
+
+** 1. Asymptotic Analysis and Recurrences
+
+*** Big-O Notation Family
+- O(f(n)): Upper bound
+- Ω(f(n)): Lower bound  
+- Θ(f(n)): Tight bound
+- o(f(n)): Strict upper bound
+- ω(f(n)): Strict lower bound
+
+*** Solving Recurrences
+1. **Substitution Method**: Guess and verify by induction
+2. **Recursion Tree Method**: Visualize the recursion
+3. **Master Theorem**: For recurrences of form T(n) = aT(n/b) + f(n)
+
+** 2. Divide and Conquer Algorithms
+
+*** Classic Examples
+- **Merge Sort**: T(n) = 2T(n/2) + Θ(n) = Θ(n log n)
+- **Binary Search**: T(n) = T(n/2) + Θ(1) = Θ(log n)
+- **Strassen's Matrix Multiplication**: T(n) = 7T(n/2) + Θ(n²) = Θ(n^log₂7)
+- **Closest Pair of Points**: Geometric divide and conquer
+
+*** Key Concepts
+- Dividing problems into subproblems
+- Combining solutions efficiently
+- Analyzing recursive running times
+
+** 3. Fundamental Data Structures
+
+*** Binary Search Trees
+- Basic operations: O(h) where h is height
+- Balanced BSTs guarantee O(log n) height
+- In-order traversal gives sorted sequence
+
+*** Heaps
+- Binary heap: Complete binary tree
+- Min/Max heap property
+- Operations: Insert O(log n), Extract-Min O(log n), Build-Heap O(n)
+
+*** Hash Tables
+- Expected O(1) operations
+- Collision resolution: chaining vs open addressing
+- Universal hashing for worst-case guarantees
+
+** 4. Dynamic Programming
+
+*** Characteristics
+1. Optimal substructure
+2. Overlapping subproblems
+3. Memoization or bottom-up computation
+
+*** Classic Problems
+- Fibonacci Numbers
+- Longest Common Subsequence
+- Edit Distance
+- Knapsack Problem
+- Matrix Chain Multiplication
+
+*** DP Formulation Process
+1. Define subproblems
+2. Write recurrence relation
+3. Identify base cases
+4. Determine computation order
+5. Reconstruct solution
+
+** 5. Greedy Algorithms
+
+*** Greedy Choice Property
+- Local optimal choices lead to global optimum
+- Proof usually by exchange argument
+
+*** Examples
+- Activity Selection
+- Huffman Coding
+- Dijkstra's Shortest Path
+- Kruskal's/Prim's MST
+
+** 6. Graph Algorithms
+
+*** Graph Representations
+- Adjacency Matrix: O(V²) space
+- Adjacency List: O(V + E) space
+
+*** Fundamental Algorithms
+- **BFS**: O(V + E), shortest paths in unweighted graphs
+- **DFS**: O(V + E), topological sort, SCC
+- **Dijkstra's**: O((V + E) log V) with binary heap
+- **Bellman-Ford**: O(VE), handles negative weights
+- **Floyd-Warshall**: O(V³), all-pairs shortest paths
+
+*** Minimum Spanning Trees
+- Kruskal's Algorithm: O(E log E)
+- Prim's Algorithm: O(E log V)
+
+** 7. Network Flows
+
+*** Max Flow Problem
+- Ford-Fulkerson Method: O(E|f*|)
+- Edmonds-Karp: O(VE²)
+- Push-Relabel: O(V²E)
+
+*** Applications
+- Bipartite Matching
+- Edge/Vertex Connectivity
+- Baseball Elimination
+
+** 8. Linear Programming
+
+*** Standard Form
+Maximize: c^T x
+Subject to: Ax ≤ b, x ≥ 0
+
+*** Algorithms
+- Simplex Method (exponential worst-case)
+- Interior Point Methods (polynomial)
+
+*** Duality
+- Weak duality theorem
+- Strong duality theorem
+- Complementary slackness
+
+** 9. Computational Complexity
+
+*** Complexity Classes
+- P: Polynomial time
+- NP: Nondeterministic polynomial time
+- NP-Complete: Hardest problems in NP
+- NP-Hard: At least as hard as NP-Complete
+
+*** NP-Completeness Proofs
+1. Show problem is in NP
+2. Reduce known NP-Complete problem to it
+
+*** Classic NP-Complete Problems
+- SAT (first proven NP-Complete)
+- 3-SAT
+- Vertex Cover
+- Hamiltonian Cycle
+- Traveling Salesman
+
+** 10. Approximation Algorithms
+
+*** Approximation Ratio
+- ρ-approximation: Solution within factor ρ of optimal
+
+*** Examples
+- Vertex Cover: 2-approximation
+- TSP with triangle inequality: 2-approximation
+- Set Cover: ln n-approximation
+
+** 11. Randomized Algorithms
+
+*** Types
+- Las Vegas: Always correct, expected running time
+- Monte Carlo: Probabilistic correctness, deterministic time
+
+*** Examples
+- Randomized QuickSort: Expected O(n log n)
+- Miller-Rabin Primality Test
+- Randomized Min-Cut
+
+* Mathematical Foundations
+
+** Probability Theory
+- Expectation and linearity of expectation
+- Indicator random variables
+- Tail bounds (Markov, Chebyshev, Chernoff)
+
+** Discrete Mathematics
+- Combinatorics and counting
+- Graph theory basics
+- Recurrence relations
+- Generating functions
+
+** Linear Algebra
+- Matrix operations
+- Eigenvalues and eigenvectors
+- Linear transformations
+
+* Transition to 6.851
+
+** From Basic to Advanced Data Structures
+
+The progression from 6.046 to 6.851 involves:
+
+1. **From Ephemeral to Persistent**
+   - 6.046: Data structures that forget their history
+   - 6.851: Data structures that remember all versions
+
+2. **From Simple to Sophisticated Analysis**
+   - 6.046: Standard amortized analysis
+   - 6.851: Retroactive operations, persistence techniques
+
+3. **From Classical to Cutting-Edge**
+   - 6.046: Well-established algorithms
+   - 6.851: Recent research and open problems
+
+** Key Skills to Master
+
+Before starting 6.851, ensure comfort with:
+
+1. **Amortized Analysis**
+   - Aggregate method
+   - Accounting method
+   - Potential method
+
+2. **Data Structure Design**
+   - Choosing appropriate representations
+   - Trading space for time
+   - Understanding pointer-based structures
+
+3. **Mathematical Maturity**
+   - Reading and writing proofs
+   - Analyzing complex recurrences
+   - Understanding asymptotic behavior
+
+* Study Resources
+
+** Primary Resources
+- CLRS (Cormen, Leiserson, Rivest, Stein): "Introduction to Algorithms"
+- MIT 6.046 OCW materials
+- Kleinberg & Tardos: "Algorithm Design"
+
+** Practice Problems
+- Past 6.046 problem sets
+- Programming competition problems (for implementation practice)
+- Theoretical exercises from CLRS
+
+** Advanced Preparation
+- Review amortized analysis thoroughly
+- Study advanced tree structures (B-trees, Red-Black trees)
+- Understand pointer manipulation and memory models
+
+* Self-Assessment Checklist
+
+Before proceeding to 6.851, you should be able to:
+
+- [ ] Analyze algorithms using all five asymptotic notations
+- [ ] Solve recurrences using multiple methods
+- [ ] Implement and analyze balanced search trees
+- [ ] Design dynamic programming solutions for novel problems
+- [ ] Prove correctness of greedy algorithms
+- [ ] Implement graph algorithms from scratch
+- [ ] Understand the basics of NP-completeness
+- [ ] Perform amortized analysis using potential method
+- [ ] Write clear mathematical proofs
+- [ ] Debug complex pointer-based data structures
+
+* Notes on Learning Path
+
+** Recommended Progression
+
+1. **Strong 6.046 Foundation** → 2. **6.854 Advanced Algorithms** → 3. **6.851 Advanced Data Structures**
+
+** Alternative Paths
+
+If you have:
+- **A in 6.046**: Can proceed to 6.851 with careful study
+- **Research experience**: May have sufficient background
+- **Competition experience**: Often have implementation skills but may need more theory
+
+** Time Investment
+
+Expect to spend:
+- 2-3 hours reviewing each 6.046 topic if rusty
+- 20-30 hours total preparation if jumping directly to 6.851
+- Continuous reference back to these fundamentals during 6.851
+
+Remember: 6.851 builds heavily on these foundations. Time spent strengthening prerequisites is time saved struggling with advanced concepts.

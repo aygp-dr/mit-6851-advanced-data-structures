@@ -18,7 +18,7 @@ Implementation of data structures from MIT's 6.851 Advanced Data Structures cour
 
 * Setup
 
-** Prerequisites
+** System Prerequisites
 
 - Emacs (for org-mode support)
 - Guile 2.2+ (or Guile 3.0)
@@ -26,6 +26,16 @@ Implementation of data structures from MIT's 6.851 Advanced Data Structures cour
 - Python 3 (for downloading tools)
 - wget (for mirroring)
 - yt-dlp (for video downloads)
+
+** Academic Prerequisites
+
+This course requires strong background in algorithms and data structures. See the [[file:prerequisites/README.org][prerequisites guide]] for detailed preparation information:
+
+- **Essential**: MIT 6.046 (Design and Analysis of Algorithms) or equivalent
+- **Recommended**: MIT 6.854 (Advanced Algorithms) or equivalent
+- **Mathematical**: Strong proof-writing skills, probability theory, amortized analysis
+
+Quick self-assessment: Can you implement balanced BSTs, analyze amortized costs, and write mathematical proofs? If not, review the prerequisites first.
 
 ** Installation
 

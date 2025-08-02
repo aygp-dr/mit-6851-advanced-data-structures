@@ -13,12 +13,30 @@ SCHEME_SRC := $(wildcard src/*.scm)
 TEST_SRC := $(wildcard tests/*.scm)
 
 # Targets
-.PHONY: all test tangle clean run-examples run
+.PHONY: all test tangle clean run-examples run experiments aall
 
 all: test
 
 # Run target - runs tests and examples
 run: test run-examples
+
+# Run all including experiments
+aall: all run experiments
+
+# Run experiments
+experiments:
+	@echo "Running experiments for $(SESSION_NAME)..."
+	@mkdir -p experiments/results
+	@if [ -d experiments ] && [ "$$(ls -A experiments/*.scm 2>/dev/null)" ]; then \
+		for exp in experiments/*.scm; do \
+			echo "Running $$exp..."; \
+			$(GUILE) $$exp > experiments/results/$$(basename $$exp .scm)-results.txt 2>&1 || \
+				echo "⚠️  Failed to run $$exp"; \
+		done; \
+		echo "✅ Experiments completed. Results in experiments/results/"; \
+	else \
+		echo "No experiments found in experiments/ directory"; \
+	fi
 
 # Extract Scheme code from org-mode notes
 tangle: $(ORG_NOTES)

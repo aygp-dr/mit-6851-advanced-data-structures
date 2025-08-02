@@ -167,3 +167,72 @@ list-sessions:
 			echo "  - $$SESSION"; \
 		fi \
 	done
+
+# === Lean Configuration ===
+LEAN_VERSION := 4.21.0
+LEAN_RELEASE := v$(LEAN_VERSION)
+TOOLS_DIR := tools/formal-methods
+LEAN_ZIP := $(TOOLS_DIR)/lean-$(LEAN_VERSION)-linux.zip
+LEAN_DIR := $(TOOLS_DIR)/lean-$(LEAN_VERSION)-linux
+LEAN_BIN := $(LEAN_DIR)/bin/lean
+LEAN_LINK := $(TOOLS_DIR)/lean4
+
+# === Directory Creation (automatic with | order-only prerequisite) ===
+$(TOOLS_DIR):
+	@install -d $@
+
+# === Download Target (file-based, idempotent) ===
+$(LEAN_ZIP): | $(TOOLS_DIR)
+	@echo "Downloading Lean $(LEAN_VERSION)..."
+	@curl -L -o $@ \
+		https://github.com/leanprover/lean4/releases/download/$(LEAN_RELEASE)/lean-$(LEAN_VERSION)-linux.zip
+
+# === Extract Target (depends on zip file) ===
+$(LEAN_BIN): $(LEAN_ZIP)
+	@echo "Extracting Lean $(LEAN_VERSION)..."
+	@cd $(TOOLS_DIR) && unzip -q $(notdir $<)
+	@touch $@  # Update timestamp to prevent re-extraction
+
+# === Symlink Target (for version-agnostic access) ===
+$(LEAN_LINK): $(LEAN_BIN)
+	@echo "Creating symlink to Lean $(LEAN_VERSION)..."
+	@ln -sf $(notdir $(LEAN_DIR)) $@
+
+# === Test Target (verifies installation) ===
+$(TOOLS_DIR)/.lean-tested: $(LEAN_BIN)
+	@echo "Testing Lean installation..."
+	@echo '#check (1 + 1 : Nat)' | $< --stdin >/dev/null
+	@$< --version
+	@$(dir $<)/lake --version
+	@touch $@
+
+# === Public Targets (aliases) ===
+.PHONY: lean-install lean-version lean-clean
+
+lean-install: $(TOOLS_DIR)/.lean-tested $(LEAN_LINK)
+	@echo "Lean $(LEAN_VERSION) ready at: $(LEAN_LINK)"
+
+lean-version: $(LEAN_BIN)
+	@$< --version 2>/dev/null || echo "Lean not installed"
+	@$(dir $<)/lake --version 2>/dev/null || true
+
+lean-clean:
+	@rm -f $(LEAN_ZIP) $(TOOLS_DIR)/.lean-tested
+	@rm -rf $(LEAN_DIR)
+	@rm -f $(LEAN_LINK)
+
+# === Pattern Rules for Future Versions ===
+# Allow: gmake tools/formal-methods/lean-4.22.0-linux.zip
+$(TOOLS_DIR)/lean-%-linux.zip: | $(TOOLS_DIR)
+	@echo "Downloading Lean $*..."
+	@curl -L -o $@ \
+		https://github.com/leanprover/lean4/releases/download/v$*/lean-$*-linux.zip
+
+# === Automatic Directory Creation for Any Path ===
+# This allows: gmake any/path/to/file
+# and creates directories as needed
+%/:
+	@install -d $@
+
+# Precious files (don't delete even if Make is interrupted)
+.PRECIOUS: $(LEAN_ZIP) $(TOOLS_DIR)/lean-%-linux.zip
