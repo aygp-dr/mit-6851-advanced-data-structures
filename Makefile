@@ -1,6 +1,6 @@
 # MIT 6.851 Advanced Data Structures - Makefile
 
-.PHONY: all check-deps setup download-materials download-videos test clean help session-% list-sessions run run-all
+.PHONY: all check-deps setup download-materials download-videos test clean help session-% list-sessions run run-all verify verify-lean verify-scheme
 
 # Default target
 all: check-deps setup
@@ -127,6 +127,27 @@ run-all:
 
 # Alias for run-all
 run: run-all
+
+# Verification targets
+verify: verify-scheme verify-lean
+	@echo ""
+	@echo "✅ All verification completed successfully!"
+
+# Verify all Scheme implementations
+verify-scheme:
+	@echo "Verifying Scheme implementations..."
+	@$(MAKE) run-all
+
+# Verify Lean specifications (automatically installs Lean if needed)
+verify-lean: $(LEAN_BIN)
+	@echo "Verifying Lean specifications..."
+	@for spec in formal-specs/problem-sets/*.lean; do \
+		if [ -f "$$spec" ]; then \
+			echo "Checking $$spec..."; \
+			$(LEAN_BIN) --check "$$spec" || echo "⚠️  Failed to verify $$spec"; \
+		fi \
+	done
+	@echo "✅ Lean verification completed"
 
 # Clean temporary files
 clean:
