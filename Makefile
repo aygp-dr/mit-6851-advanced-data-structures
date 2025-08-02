@@ -144,7 +144,7 @@ verify-lean: $(LEAN_BIN)
 	@for spec in formal-specs/problem-sets/*.lean; do \
 		if [ -f "$$spec" ]; then \
 			echo "Checking $$spec..."; \
-			$(LEAN_BIN) --check "$$spec" || echo "⚠️  Failed to verify $$spec"; \
+			$(LEAN_BIN) "$$spec" || echo "⚠️  Failed to verify $$spec"; \
 		fi \
 	done
 	@echo "✅ Lean verification completed"
@@ -192,18 +192,14 @@ list-sessions:
 # === Lean Configuration ===
 LEAN_VERSION := 4.21.0
 LEAN_RELEASE := v$(LEAN_VERSION)
-TOOLS_DIR := tools/formal-methods
+TOOLS_DIR := tools
 LEAN_ZIP := $(TOOLS_DIR)/lean-$(LEAN_VERSION)-linux.zip
 LEAN_DIR := $(TOOLS_DIR)/lean-$(LEAN_VERSION)-linux
 LEAN_BIN := $(LEAN_DIR)/bin/lean
 LEAN_LINK := $(TOOLS_DIR)/lean4
 
-# === Directory Creation (automatic with | order-only prerequisite) ===
-$(TOOLS_DIR):
-	@install -d $@
-
 # === Download Target (file-based, idempotent) ===
-$(LEAN_ZIP): | $(TOOLS_DIR)
+$(LEAN_ZIP): | $(TOOLS_DIR)/
 	@echo "Downloading Lean $(LEAN_VERSION)..."
 	@curl -L -o $@ \
 		https://github.com/leanprover/lean4/releases/download/$(LEAN_RELEASE)/lean-$(LEAN_VERSION)-linux.zip
@@ -215,7 +211,7 @@ $(LEAN_BIN): $(LEAN_ZIP)
 	@touch $@  # Update timestamp to prevent re-extraction
 
 # === Symlink Target (for version-agnostic access) ===
-$(LEAN_LINK): $(LEAN_BIN)
+$(LEAN_LINK): $(LEAN_BIN) | $(TOOLS_DIR)/
 	@echo "Creating symlink to Lean $(LEAN_VERSION)..."
 	@ln -sf $(notdir $(LEAN_DIR)) $@
 

@@ -383,7 +383,7 @@
         '()
         lst))
 
-(define +inf.0 (inf))   ; Positive infinity
+; +inf.0 is built-in to Guile
 (define infinity 1e308)  ; Large number
 
 ;; Horizontal segment for 3D range searching
@@ -415,4 +415,7 @@
 ;; Missing stubs
 (define (fix-structure kds cert) #t)
 (define (replace-certificates kds cert) #t)
-(define (when cond . body) (if cond (begin . body)))
+(define-syntax when
+  (syntax-rules ()
+    ((when cond body ...)
+     (if cond (begin body ...)))))

@@ -418,7 +418,7 @@
   "Create empty splay tree"
   (make-tracked-bst #f '() 0))
 
-(define +inf.0 (inf))
+; +inf.0 is built-in to Guile
 
 ;; Stub implementations
 (define (process-node node) #t)
@@ -430,9 +430,15 @@
 (define (get-current-points tree) '())
 (define (current-time) 0)
 (define (execute-bst-operations tree points) #t)
-(define (while cond . body) (when cond (begin . body)))
-(define (when cond . body) (if cond (begin . body)))
-(define (unless cond . body) (if (not cond) (begin . body)))
+(define-syntax when
+  (syntax-rules ()
+    ((when cond body ...)
+     (if cond (begin body ...)))))
+
+(define-syntax unless
+  (syntax-rules ()
+    ((unless cond body ...)
+     (if (not cond) (begin body ...)))))
 
 ;; Additional stub for missing variables
 (define constant 1)
