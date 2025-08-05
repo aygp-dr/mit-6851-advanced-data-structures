@@ -1,0 +1,130 @@
+MIT 6.851 - Binary Search Tree Comparison
+=========================================
+
+BST Performance Comparison
+=========================
+
+
+Dataset size: 1000
+-------------------
+
+=== Random insertion (n=1000) ===
+  Insertion time: 0.021 seconds
+  Average per insert: 0.021377 ms
+  Final tree height: 21
+  Height/log₂(n) ratio: 2.11
+  Search time (1000 searches): 0.012 seconds
+  Average per search: 0.012483 ms
+  Average node depth: 11.26
+  Optimal height: 10.0
+  Height efficiency: 47.6%
+
+=== Sequential insertion (n=1000) ===
+  Insertion time: 0.895 seconds
+  Average per insert: 0.894661 ms
+  Final tree height: 1000
+  Height/log₂(n) ratio: 100.34
+  Search time (1000 searches): 0.447 seconds
+  Average per search: 0.446924 ms
+  Average node depth: 499.50
+  Optimal height: 10.0
+  Height efficiency: 1.0%
+
+=== Alternating insertion (n=1000) ===
+  Insertion time: 0.811 seconds
+  Average per insert: 0.811430 ms
+  Final tree height: 1000
+  Height/log₂(n) ratio: 100.34
+  Search time (1000 searches): 0.465 seconds
+  Average per search: 0.465093 ms
+  Average node depth: 499.50
+  Optimal height: 10.0
+  Height efficiency: 1.0%
+
+
+Dataset size: 5000
+-------------------
+
+=== Random insertion (n=5000) ===
+  Insertion time: 0.130 seconds
+  Average per insert: 0.025994 ms
+  Final tree height: 29
+  Height/log₂(n) ratio: 2.36
+  Search time (1000 searches): 0.012 seconds
+  Average per search: 0.012396 ms
+  Average node depth: 13.68
+  Optimal height: 13.0
+  Height efficiency: 44.8%
+
+=== Sequential insertion (n=5000) ===
+  Insertion time: 21.781 seconds
+  Average per insert: 4.356241 ms
+  Final tree height: 5000
+  Height/log₂(n) ratio: 406.91
+  Search time (1000 searches): 2.210 seconds
+  Average per search: 2.210278 ms
+  Average node depth: 2499.50
+  Optimal height: 13.0
+  Height efficiency: 0.3%
+
+=== Alternating insertion (n=5000) ===
+  Insertion time: 23.153 seconds
+  Average per insert: 4.630666 ms
+  Final tree height: 5000
+  Height/log₂(n) ratio: 406.91
+  Search time (1000 searches): 2.052 seconds
+  Average per search: 2.051802 ms
+  Average node depth: 2499.50
+  Optimal height: 13.0
+  Height efficiency: 0.3%
+
+
+Dataset size: 10000
+-------------------
+
+=== Random insertion (n=10000) ===
+  Insertion time: 0.242 seconds
+  Average per insert: 0.024216 ms
+  Final tree height: 27
+  Height/log₂(n) ratio: 2.03
+  Search time (1000 searches): 0.014 seconds
+  Average per search: 0.013563 ms
+  Average node depth: 14.85
+  Optimal height: 14.0
+  Height efficiency: 51.9%
+
+=== Sequential insertion (n=10000) ===
+  Insertion time: 92.928 seconds
+  Average per insert: 9.292771 ms
+  Final tree height: 10000
+  Height/log₂(n) ratio: 752.57
+  Search time (1000 searches): 3.956 seconds
+  Average per search: 3.955877 ms
+  Average node depth: 4999.50
+  Optimal height: 14.0
+  Height efficiency: 0.1%
+
+=== Alternating insertion (n=10000) ===
+  Insertion time: 86.769 seconds
+  Average per insert: 8.676942 ms
+  Final tree height: 10000
+  Height/log₂(n) ratio: 752.57
+  Search time (1000 searches): 4.582 seconds
+  Average per search: 4.581795 ms
+  Average node depth: 4999.50
+  Optimal height: 14.0
+  Height efficiency: 0.1%
+
+
+=== Analysis ===
+1. Random insertions produce reasonably balanced trees
+2. Sequential insertions create degenerate (linear) trees
+3. Alternating patterns create specific unbalanced shapes
+
+This motivates the need for self-balancing BSTs like:
+  - AVL trees (height-balanced)
+  - Red-Black trees (approximately balanced)
+  - Splay trees (self-adjusting)
+  - B-trees (for external memory)
+
+In 6.851, we'll see how to make these persistent!

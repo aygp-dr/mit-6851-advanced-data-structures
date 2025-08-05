@@ -88,10 +88,10 @@
   (map-indexed
    (lambda (j xj)
      (let ((min-cost
-            (fold min +inf.0
+            (fold min 1000000000000.0
                   (map-indexed
                    (lambda (i xi)
-                     (if (>= i j) +inf.0
+                     (if (>= i j) 1000000000000.0
                          (let ((space (abs (- xi xj)))
                                (time (count-distinct-between
                                       access-sequence i j)))
