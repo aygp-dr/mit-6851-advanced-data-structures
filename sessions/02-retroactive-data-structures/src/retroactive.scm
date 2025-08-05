@@ -70,7 +70,7 @@
 (define (rollback-insert retro-ds t operation)
   "Insert operation at time t using rollback method"
   (let* ((ops (rb-operations retro-ds))
-         (new-ops (insert-sorted (cons (cons t operation) ops)
+         (new-ops (insert-sorted ops (cons t operation)
                                  (lambda (a b) (< (car a) (car b)))))
          (checkpoint (find-checkpoint-before (rb-checkpoints retro-ds) t)))
     ;; Replay from checkpoint
