@@ -58,15 +58,15 @@
                         (retro-op-data op)))
               (timeline-operations timeline))))
 
+;; Simple stack implementation for demonstration
+(define (make-simple-stack) '())
+(define (simple-stack-push stack val) (cons val stack))
+(define (simple-stack-pop stack) (if (null? stack) stack (cdr stack)))
+(define (simple-stack-top stack) (if (null? stack) #f (car stack)))
+
 (define (demo-retroactive-stack)
   "Demonstrate retroactive stack with time travel"
   (format #t "~%~%=== Retroactive Stack Demo ===~%")
-  
-  ;; Simple stack implementation for demonstration
-  (define (make-simple-stack) '())
-  (define (stack-push stack val) (cons val stack))
-  (define (stack-pop stack) (if (null? stack) stack (cdr stack)))
-  (define (stack-top stack) (if (null? stack) #f (car stack)))
   
   ;; Create retroactive stack
   (let ((retro-stack (create-rollback-retro make-simple-stack)))
@@ -102,31 +102,31 @@
     (format #t "  t=25: ~a~%" (query-at-time retro-stack 25))
     (format #t "  t=35: ~a~%" (query-at-time retro-stack 35))))
 
+;; Simple queue implementation
+(define-record-type <queue>
+  (make-queue-internal front rear)
+  queue?
+  (front queue-front set-queue-front!)
+  (rear queue-rear set-queue-rear!))
+
+(define (make-queue) (make-queue-internal '() '()))
+
+(define (enqueue q val)
+  (let ((new-q (make-queue-internal (queue-front q) 
+                                    (cons val (queue-rear q)))))
+    new-q))
+
+(define (dequeue q)
+  (if (null? (queue-front q))
+      (if (null? (queue-rear q))
+          q  ; empty queue
+          (let ((new-front (reverse (queue-rear q))))
+            (make-queue-internal (cdr new-front) '())))
+      (make-queue-internal (cdr (queue-front q)) (queue-rear q))))
+
 (define (demo-retroactive-queue)
   "Demonstrate retroactive queue operations"
   (format #t "~%~%=== Retroactive Queue Demo ===~%")
-  
-  ;; Simple queue implementation
-  (define-record-type <queue>
-    (make-queue-internal front rear)
-    queue?
-    (front queue-front set-queue-front!)
-    (rear queue-rear set-queue-rear!))
-  
-  (define (make-queue) (make-queue-internal '() '()))
-  
-  (define (enqueue q val)
-    (let ((new-q (make-queue-internal (queue-front q) 
-                                      (cons val (queue-rear q)))))
-      new-q))
-  
-  (define (dequeue q)
-    (if (null? (queue-front q))
-        (if (null? (queue-rear q))
-            q  ; empty queue
-            (let ((new-front (reverse (queue-rear q))))
-              (make-queue-internal (cdr new-front) '())))
-        (make-queue-internal (cdr (queue-front q)) (queue-rear q))))
   
   ;; Demonstrate retroactive queue
   (let ((timeline (make-timeline '() 0)))
@@ -161,13 +161,15 @@
     (format #t "  t=35: [X, B] (A dequeued)~%")
     (format #t "  t=45: [X, B, C]~%")))
 
+;; Stack for performance testing
+(define (make-perf-stack) '())
+
 (define (demo-performance-analysis)
   "Analyze performance of retroactive operations"
   (format #t "~%~%=== Performance Analysis Demo ===~%")
   
   ;; Create a retroactive data structure with many operations
-  (define (make-perf-stack) '())
-  (let ((retro-ds (create-rollback-retro make-perf-stack)))
+  (let ((retro-ds (create-rollback-retro make-perf-stack))
     
     ;; Insert many operations
     (format #t "~%Inserting 100 operations...~%")
