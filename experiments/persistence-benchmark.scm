@@ -92,7 +92,7 @@
        (if (< i n)
            (let* ((s1 (stack-push stack i))
                   (s2 (stack-push s1 (+ i 1)))
-                  (val (stack-top s2))
+                  (val (stack-peek s2))
                   (s3 (stack-pop s2)))
              (loop (+ i 2) s3))
            stack))))
@@ -127,12 +127,12 @@
      "Persistent version creation"
      1
      (lambda ()
-       (let loop ((i 0) (versions '()))
+       (let loop ((i 0) (version-list '()))
          (if (< i versions)
              (loop (+ i 1)
                    (cons (stack-push base-stack (+ n i))
-                         versions))
-             versions))))
+                         version-list))
+             version-list))))
     
     ;; Ephemeral can't efficiently create versions
     (format #t "  Ephemeral: N/A (cannot efficiently create independent versions)~%")))

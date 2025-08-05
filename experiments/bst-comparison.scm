@@ -4,6 +4,7 @@
 ;;; bst-comparison.scm - Compare different BST implementations
 
 (use-modules (srfi srfi-1)
+             (srfi srfi-9)   ; Record types
              (srfi srfi-19)
              (srfi srfi-43)  ; Vector operations
              (ice-9 format))
@@ -93,7 +94,7 @@
             (* 1000 (/ time (length sequence))))
     (format #t "  Final tree height: ~a~%" (bst-height tree))
     (format #t "  Height/log₂(n) ratio: ~,2f~%" 
-            (/ (bst-height tree) (log (length sequence) 2)))
+            (/ (bst-height tree) (/ (log (length sequence)) (log 2))))
     
     tree))
 
@@ -132,14 +133,14 @@
         (total-depth (sum-depths tree 0)))
     (when (> n 0)
       (format #t "  Average node depth: ~,2f~%" (/ total-depth n))
-      (format #t "  Optimal height: ~a~%" (ceiling (log (+ n 1) 2)))
+      (format #t "  Optimal height: ~a~%" (ceiling (/ (log (+ n 1)) (log 2))))
       (format #t "  Height efficiency: ~,1f%~%"
-              (* 100 (/ (ceiling (log (+ n 1) 2))
+              (* 100 (/ (ceiling (/ (log (+ n 1)) (log 2)))
                         (bst-height tree)))))))
 
 (define (compare-bst-performance)
   "Compare BST performance on different input patterns"
-  (let ((sizes '(1000 5000 10000)))
+  (let ((sizes '(100 500 1000)))
     
     (format #t "~%BST Performance Comparison~%")
     (format #t "=========================~%")

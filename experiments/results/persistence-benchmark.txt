@@ -1,0 +1,105 @@
+MIT 6.851 - Persistent Data Structures Benchmark
+================================================
+
+=== Push-only Benchmark (n=1000) ===
+
+Benchmarking Persistent push (1 iterations)...
+  Total time: 0.002 seconds
+  Average time per operation: 2.346000 ms
+  Operations per second: 426.
+
+Benchmarking Ephemeral push (1 iterations)...
+  Total time: 0.000 seconds
+  Average time per operation: 0.387000 ms
+  Operations per second: 2584.
+
+=== Push-Pop Benchmark (n=1000) ===
+
+Benchmarking Persistent push-pop (1 iterations)...
+  Total time: 0.001 seconds
+  Average time per operation: 1.206000 ms
+  Operations per second: 829.
+
+Benchmarking Ephemeral push-pop (1 iterations)...
+  Total time: 0.001 seconds
+  Average time per operation: 0.532000 ms
+  Operations per second: 1880.
+
+=== Push-only Benchmark (n=10000) ===
+
+Benchmarking Persistent push (1 iterations)...
+  Total time: 0.006 seconds
+  Average time per operation: 5.956000 ms
+  Operations per second: 168.
+
+Benchmarking Ephemeral push (1 iterations)...
+  Total time: 0.003 seconds
+  Average time per operation: 3.103000 ms
+  Operations per second: 322.
+
+=== Push-Pop Benchmark (n=10000) ===
+
+Benchmarking Persistent push-pop (1 iterations)...
+  Total time: 0.012 seconds
+  Average time per operation: 11.955000 ms
+  Operations per second: 84.
+
+Benchmarking Ephemeral push-pop (1 iterations)...
+  Total time: 0.004 seconds
+  Average time per operation: 3.916000 ms
+  Operations per second: 255.
+
+=== Push-only Benchmark (n=100000) ===
+
+Benchmarking Persistent push (1 iterations)...
+  Total time: 0.056 seconds
+  Average time per operation: 56.347000 ms
+  Operations per second: 18.
+
+Benchmarking Ephemeral push (1 iterations)...
+  Total time: 0.042 seconds
+  Average time per operation: 41.982000 ms
+  Operations per second: 24.
+
+=== Push-Pop Benchmark (n=100000) ===
+
+Benchmarking Persistent push-pop (1 iterations)...
+  Total time: 0.149 seconds
+  Average time per operation: 148.710000 ms
+  Operations per second: 7.
+
+Benchmarking Ephemeral push-pop (1 iterations)...
+  Total time: 0.056 seconds
+  Average time per operation: 55.842000 ms
+  Operations per second: 18.
+
+=== Version Creation Benchmark ===
+Base stack size: 1000, versions to create: 100
+
+Benchmarking Persistent version creation (1 iterations)...
+  Total time: 0.000 seconds
+  Average time per operation: 0.085000 ms
+  Operations per second: 11765.
+  Ephemeral: N/A (cannot efficiently create independent versions)
+
+=== Memory Sharing Analysis ===
+Creating 100 versions of stacks with shared structure...
+  Base stack has 100 elements
+  Created 100 versions, each with 101 elements
+  Total unique nodes: 200 (vs 10100 without sharing)
+  Memory savings: 98.0%
+
+=== Summary ===
+Persistent Data Structures:
+  ✓ All operations create new versions
+  ✓ Old versions remain accessible
+  ✓ Memory sharing between versions
+  ✗ Slight overhead per operation
+
+Ephemeral Data Structures:
+  ✓ Faster individual operations
+  ✗ Destructive updates lose history
+  ✗ Cannot efficiently create versions
+  ✗ No memory sharing possible
+
+Benchmark complete.
