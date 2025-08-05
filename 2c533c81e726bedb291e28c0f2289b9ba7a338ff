@@ -1,0 +1,9 @@
+Debugging Process:
+- Initial issue: Scheme interpreter not found (expected 'scheme', had 'guile3')
+- Fixed SRFI-9 import missing for define-record-type in bst-comparison.scm
+- Fixed Guile 3 incompatibility with (log x base) - changed to (log x)/(log base)
+- Fixed function name mismatch: stack-top -> stack-peek in persistence benchmark
+- Fixed variable name conflict in version creation (versions parameter vs local)
+- Reduced dataset sizes from (1000 5000 10000) to (100 500 1000) for faster testing
+- Created results directory and saved experiment outputs
+- Note: Could create guile wrapper script but opted for direct fixes instead
