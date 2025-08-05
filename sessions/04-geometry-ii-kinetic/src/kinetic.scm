@@ -328,9 +328,12 @@
 
 (define (involves-elements? cert x y)
   "Check if certificate involves x or y"
-  (match (cert-condition cert)
-    ((_ a b) (or (eq? a x) (eq? a y) (eq? b x) (eq? b y)))
-    (_ #f)))
+  (let ((cond (cert-condition cert)))
+    (and (list? cond)
+         (= (length cond) 3)
+         (let ((a (cadr cond))
+               (b (caddr cond)))
+           (or (eq? a x) (eq? a y) (eq? b x) (eq? b y))))))
 
 ;; Kinetic BST operations
 (define (swap-nodes bst x y)
