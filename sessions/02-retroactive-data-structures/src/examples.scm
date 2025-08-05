@@ -169,7 +169,7 @@
   (format #t "~%~%=== Performance Analysis Demo ===~%")
   
   ;; Create a retroactive data structure with many operations
-  (let ((retro-ds (create-rollback-retro make-perf-stack))
+  (let ((retro-ds (create-rollback-retro make-perf-stack)))
     
     ;; Insert many operations
     (format #t "~%Inserting 100 operations...~%")
