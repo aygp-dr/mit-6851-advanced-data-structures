@@ -1,6 +1,12 @@
 # MIT 6.851 Advanced Data Structures - Makefile
 
-.PHONY: all check-deps setup download-materials download-videos test clean help session-% list-sessions run run-all verify verify-lean verify-scheme
+# Project configuration
+PROJECT_NAME := mit-6851-advanced-data-structures
+PROJECT_ROOT := $(shell pwd)
+export PROJECT_NAME
+export PROJECT_ROOT
+
+.PHONY: all check-deps setup download-materials download-videos test clean help session-% list-sessions run run-all verify verify-lean verify-scheme dev dev-attach dev-info dev-stop
 
 # Default target
 all: check-deps setup
@@ -20,6 +26,12 @@ help:
 	@echo "  make clean          - Clean temporary files"
 	@echo "  make session-N      - Work on session N (e.g., make session-1)"
 	@echo "  make list-sessions  - List all available sessions"
+	@echo ""
+	@echo "Development environment:"
+	@echo "  make dev            - Start tmux development session with Emacs"
+	@echo "  make dev-attach     - Attach to existing tmux session"
+	@echo "  make dev-info       - Show tmux session information"
+	@echo "  make dev-stop       - Stop tmux development session"
 	@echo ""
 
 # Check for required dependencies
@@ -250,6 +262,19 @@ $(TOOLS_DIR)/lean-%-linux.zip: | $(TOOLS_DIR)
 # and creates directories as needed
 %/:
 	@install -d $@
+
+# Development environment targets
+dev:
+	@bash scripts/tmux-dev.sh start
+
+dev-attach:
+	@bash scripts/tmux-dev.sh attach
+
+dev-info:
+	@bash scripts/tmux-dev.sh info
+
+dev-stop:
+	@bash scripts/tmux-dev.sh stop
 
 # Precious files (don't delete even if Make is interrupted)
 .PRECIOUS: $(LEAN_ZIP) $(TOOLS_DIR)/lean-%-linux.zip

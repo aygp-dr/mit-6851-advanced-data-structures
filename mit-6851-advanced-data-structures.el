@@ -3,12 +3,30 @@
 ;;; Commentary:
 ;; Emacs configuration for studying MIT 6.851 Advanced Data Structures
 ;; Works both locally and through TRAMP to nexushive (nh)
+;; Supports Geiser, Guile, Paredit, and Org-mode for Scheme development
 
 ;;; Code:
 
 (require 'org)
 (require 'ob)
 (require 'tramp)
+
+;; Package management for Scheme development
+(unless (package-installed-p 'geiser)
+  (package-refresh-contents)
+  (package-install 'geiser))
+
+(unless (package-installed-p 'geiser-guile)
+  (package-refresh-contents)
+  (package-install 'geiser-guile))
+
+(unless (package-installed-p 'paredit)
+  (package-refresh-contents)
+  (package-install 'paredit))
+
+(require 'geiser)
+(require 'geiser-guile)
+(require 'paredit)
 
 ;;; Constants
 (defconst mit-6851-nexushive-host "nh"
@@ -250,6 +268,16 @@ if __name__ == '__main__':
     map)
   "Keymap for MIT 6.851 commands.")
 
+;;; Scheme Development Support
+(defun mit-6851-setup-scheme-mode ()
+  "Configure Scheme mode with Paredit and Geiser."
+  (paredit-mode 1)
+  (geiser-mode 1)
+  (setq geiser-guile-binary "guile3")
+  (setq geiser-repl-query-on-kill-p nil)
+  (setq geiser-repl-history-filename 
+        (expand-file-name ".geiser-history" (mit-6851-get-project-root))))
+
 ;;; Minor Mode
 (define-minor-mode mit-6851-mode
   "Minor mode for MIT 6.851 Advanced Data Structures course."
@@ -257,7 +285,9 @@ if __name__ == '__main__':
   :keymap mit-6851-mode-map
   (when mit-6851-mode
     (mit-6851-setup-org-babel)
-    (mit-6851-setup-tramp)))
+    (mit-6851-setup-tramp)
+    (when (derived-mode-p 'scheme-mode)
+      (mit-6851-setup-scheme-mode))))
 
 ;;; Auto-activation
 (defun mit-6851-maybe-enable ()
